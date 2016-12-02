@@ -1,0 +1,39 @@
+{
+  "name": "soundworks",
+  "version": "0.0.1",
+  "description": "sound experiments",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Siri0n/soundworks.git"
+  },
+  "keywords": [
+    "sound"
+  ],
+  "devDependencies": {
+    "babel-preset-es2015": "^6.3.13",
+    "babel-preset-react": "^6.16.0",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "gulp": "^3.9.0",
+    "gulp-watch": "^4.3.5",
+    "vinyl-source-stream": "^1.1.0",
+    "watchify": "^3.7.0"
+  },
+  "dependencies": {
+    "lodash": "^4.0.0",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1",
+    "react-redux": "^4.4.6",
+    "redux": "^3.6.0"
+  },
+  "author": "Siri0n",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Siri0n/soundworks/issues"
+  },
+  "homepage": "https://github.com/Siri0n/soundworks#readme"
+}

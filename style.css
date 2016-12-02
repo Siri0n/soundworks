@@ -1,0 +1,21 @@
+div.audio-node{
+	border: 1px solid black;
+	margin: 5px;
+	display: inline-block;
+}
+
+span.name{
+	margin: 5px;
+	float: left;
+}
+
+span.close{
+	margin: 5px;
+	float: right;
+	cursor: pointer;
+}
+
+input[type="text"]{
+	display: block;
+	margin: 5px;
+}
