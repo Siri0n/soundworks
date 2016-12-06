@@ -19,3 +19,33 @@ input[type="text"]{
 	display: block;
 	margin: 5px;
 }
+
+div.play, div.stop{
+/* 	 -webkit-transition: top 1s ease-out 0.5s;
+     -moz-transition: top 1s ease-out 0.5s;
+     -o-transition: top 1s ease-out 0.5s; */
+     transition-property: border-left, border-top, border-bottom, border-right;
+     transition-duration: 0.5s;
+     transition-timing-function: ease-in;
+}
+div.play{
+	margin: 50px;
+	width: 0;
+	height: 0;
+	cursor: pointer;
+	border-left: 80px solid green; 
+	border-top: 50px solid transparent; 
+	border-bottom: 50px solid transparent;
+	border-right: 0px solid green;
+}
+
+div.stop{
+	margin: 50px;
+	width: 0;
+	height: 0;
+	cursor: pointer;
+	border-left: 50px solid red; 
+	border-top: 50px solid red; 
+	border-bottom: 50px solid red;
+	border-right: 50px solid red;
+}

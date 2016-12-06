@@ -70,6 +70,8 @@ function oscillator(state, command){
 					})
 			}
 		)
+	}else if(command.type == "TOGGLE_PLAYING"){
+		return Object.assign({}, state, {playing: !state.playing});
 	}else{
 		return state;
 	}
