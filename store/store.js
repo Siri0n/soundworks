@@ -12,15 +12,15 @@ function createNode(state, nodeType){
 	if(nodeType == "oscillator"){
 		return {
 			frequency: 500,
-			name: uniqueName(nodeType, state.nodes[nodeType].map(elem => elem.name))
+			id: uniqueId(nodeType, state.nodes[nodeType].map(elem => elem.id))
 		}
 	}
 }
 
-function uniqueName(prefix, existingNames){
+function uniqueId(prefix, existingIds){
 	var i = 1;
-	while(existingNames.includes(prefix + i++));
-	return prefix + -- i;
+	while(existingIds.includes(prefix + i++));
+	return prefix + --i;
 }
 
 function oscillator(state, command){
@@ -47,7 +47,7 @@ function oscillator(state, command){
 					{}, 
 					state.nodes, 
 					{
-						[command.nodeType]: state.nodes[command.nodeType].filter(n => n.name != command.name)
+						[command.nodeType]: state.nodes[command.nodeType].filter(n => n.id != command.id)
 					})
 			}
 		)
@@ -61,7 +61,7 @@ function oscillator(state, command){
 					state.nodes, 
 					{
 						[command.nodeType]: state.nodes[command.nodeType].map(function(o){
-							if(o.name == command.name){
+							if(o.id == command.id){
 								return Object.assign({}, o, {[command.key]: command.value});
 							}else{
 								return o;
@@ -72,6 +72,39 @@ function oscillator(state, command){
 		)
 	}else if(command.type == "TOGGLE_PLAYING"){
 		return Object.assign({}, state, {playing: !state.playing});
+	}else if(command.type == "CONNECT_FROM"){
+		return Object.assign({}, state, {connecting: {id: command.id, nodeType: command.nodeType}});
+	}else if(command.type == "CONNECT_TO"){
+		console.log(state.connecting);
+		return Object.assign(
+			{}, 
+			state, 
+			{
+				connecting: null,
+				nodes: Object.assign(
+					{}, 
+					state.nodes, 
+					{
+						[state.connecting.nodeType]: state.nodes[state.connecting.nodeType].map(function(o){
+							if(o.id == state.connecting.id){
+								return Object.assign(
+									{}, 
+									o, 
+									{
+										connect: (o.connect || []).concat(
+											[{id: command.id, param: command.param}]
+										)
+									}
+								);
+							}else{
+								return o;
+							}
+						})
+					})
+			}
+		)
+	}else if(command.type == "CONNECT_ABORT"){
+		return Object.assign({}, state, {connecting: null});
 	}else{
 		return state;
 	}

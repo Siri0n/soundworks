@@ -1,10 +1,10 @@
 var React = require("react");
 
-module.exports = function({items, Node, add, remove, modify}){
+module.exports = function({items, Node, type, methods, connecting}){
 	return <div>
-		{items.map(o => 
-			<Node key={o.name} data={o} remove={remove.bind(null, o.name)} modify={modify.bind(null, o.name)}/>
+		{items.map(elem => 
+			<Node key={elem.id} data={elem} {...{type, methods, connecting}}/>
 		)}
-		<button onClick={add}>add</button>
+		<button onClick={() => methods.add(type)}>add</button>
 	</div>
 }
