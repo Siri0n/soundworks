@@ -2,7 +2,8 @@ var Redux = require("redux");
 
 const initState = {
 	nodes:{
-		oscillator: []
+		oscillator: [],
+		gain: []
 	}
 }
 
@@ -12,6 +13,11 @@ function createNode(state, nodeType){
 	if(nodeType == "oscillator"){
 		return {
 			frequency: 500,
+			id: uniqueId(nodeType, state.nodes[nodeType].map(elem => elem.id))
+		}
+	}else if(nodeType == "gain"){
+		return {
+			gain: 1,
 			id: uniqueId(nodeType, state.nodes[nodeType].map(elem => elem.id))
 		}
 	}

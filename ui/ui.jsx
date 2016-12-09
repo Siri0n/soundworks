@@ -4,7 +4,7 @@ var Synthesizer = require("./synthesizer.jsx");
 
 module.exports = function(){
 	return <div> 
-		<ListManager types={["oscillator"]}/>
+		<ListManager types={["oscillator", "gain"]}/>
 		<Synthesizer/>
 	</div>
 }	

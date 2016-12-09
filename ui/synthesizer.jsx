@@ -32,22 +32,28 @@ function play(state){
 		oscillators.push(o);
 		o.frequency.value = data.frequency;
 	});
-	state.nodes.oscillator.forEach(function(data){
-		var o = nodes[data.id];
-		if(data.connect){
-			data.connect.forEach(function(elem){
-				var target = nodes[elem.id];
-				if(elem.param){
-					o.connect(target[elem.param]);
-				}else{
-					o.connect(target);
-				}
-			})
-		}else{
-			o.connect(ctx.destination);
-		}
-		o.start();
-	})
+	state.nodes.gain.forEach(function(data){
+		var g = nodes[data.id] = ctx.createGain();
+		g.gain.value = data.gain;
+	});
+	["oscillator", "gain"].forEach(function(key){
+		state.nodes[key].forEach(function(data){
+			var node = nodes[data.id];
+			if(data.connect){
+				data.connect.forEach(function(elem){
+					var target = nodes[elem.id];
+					if(elem.param){
+						node.connect(target[elem.param]);
+					}else{
+						node.connect(target);
+					}
+				})
+			}else{
+				node.connect(ctx.destination);
+			}
+		});
+	});
+	oscillators.forEach(o => o.start());
 }
 
 function stop(){
