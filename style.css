@@ -1,30 +1,49 @@
+div.nodeList{
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: stretch;
+}
+
+button.add{
+	margin: 5px;
+	min-height: 5em;	
+}
+
 div.audio-node{
 	border: 1px solid black;
 	margin: 5px;
-	display: inline-block;
-	position: relative;
+	padding: 5px;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+	width: 200px;
+}
+
+div.audio-param > *{
+	margin-bottom: 5px;
+}
+
+div.audio-param > input{
+	width: 50px;
 }
 
 span.name{
-	margin: 5px;
 	float: left;
 }
 
 span.close{
-	margin: 5px;
 	float: right;
 	cursor: pointer;
 }
 
-input[type="text"]{
-	display: block;
-	margin: 5px;
+span.collapse{
+	cursor: pointer;
+	text-decoration: underline;
 }
 
 div.play, div.stop{
-/* 	 -webkit-transition: top 1s ease-out 0.5s;
-     -moz-transition: top 1s ease-out 0.5s;
-     -o-transition: top 1s ease-out 0.5s; */
      transition-property: border-left, border-top, border-bottom, border-right;
      transition-duration: 0.5s;
      transition-timing-function: ease-in;
@@ -51,18 +70,10 @@ div.stop{
 	border-right: 50px solid red;
 }
 
-div.hidden > *{
-	visibility: hidden;
+select{
+	width: 170px;
 }
-
-div.connect{
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-}
-
-div.connections > *{
-	display: block;
+span.highlighted{
+	cursor: pointer;
+	background-color: #faa;
 }

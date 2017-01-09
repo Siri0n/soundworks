@@ -14,7 +14,7 @@ module.exports = connect(
 	}
 )(function({state, togglePlaying}){
 	return <div>
-		{state.playing ?
+		{state.get("playing") ?
 		<div className="stop" onClick={function(){stop(); togglePlaying();}}/> :
 		<div className="play" onClick={function(){play(state); togglePlaying();}}/>
 		}
@@ -27,23 +27,24 @@ var ctx = new (window.AudioContext || window.webkitAudioContext)();
 
 function play(state){
 
-	state.nodes.oscillator.forEach(function(data){
-		var o = nodes[data.id] = ctx.createOscillator();
+	state.getIn(["lists", "oscillator", "nodes"]).forEach(function(data, id){
+		var o = nodes[id] = ctx.createOscillator();
 		oscillators.push(o);
-		o.frequency.value = data.frequency;
+		o.frequency.value = data.get("frequency");
 	});
-	state.nodes.gain.forEach(function(data){
-		var g = nodes[data.id] = ctx.createGain();
-		g.gain.value = data.gain;
+	state.getIn(["lists", "gain", "nodes"]).forEach(function(data, id){
+		var g = nodes[id] = ctx.createGain();
+		g.gain.value = data.get("gain");
 	});
-	["oscillator", "gain"].forEach(function(key){
-		state.nodes[key].forEach(function(data){
-			var node = nodes[data.id];
-			if(data.connect){
-				data.connect.forEach(function(elem){
-					var target = nodes[elem.id];
-					if(elem.param){
-						node.connect(target[elem.param]);
+	state.get("lists").forEach(function(list, type){
+		list.get("nodes").forEach(function(data, id){
+			var node = nodes[id];
+			console.log(data);
+			if(data.getIn(["connections", "data"]).size){
+				data.getIn(["connections", "data"]).forEach(function(elem, id){
+					var target = nodes[elem.get("id")];
+					if(elem.get("param")){
+						node.connect(target[elem.get("param")]);
 					}else{
 						node.connect(target);
 					}
@@ -51,7 +52,9 @@ function play(state){
 			}else{
 				node.connect(ctx.destination);
 			}
+			return true;
 		});
+		return true;
 	});
 	oscillators.forEach(o => o.start());
 }

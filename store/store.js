@@ -1,117 +1,103 @@
 var Redux = require("redux");
+var Immutable = require("immutable");
 
-const initState = {
-	nodes:{
-		oscillator: [],
-		gain: []
-	}
-}
+const initState = Immutable.fromJS({
+	lists:{
+		oscillator: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
+		},
+		gain: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
+		},
+	},
+	names: {},
+	order: ["oscillator", "gain"],
+	playing: false,
+	connecting: null,
+	lastId: 0
+});
 
-var store = module.exports = Redux.createStore(oscillator, initState);
+var store = module.exports = Redux.createStore(reducer, initState);
 
-function createNode(state, nodeType){
+function createNode(names, nodeType){
+	var result, name;
 	if(nodeType == "oscillator"){
-		return {
-			frequency: 500,
-			id: uniqueId(nodeType, state.nodes[nodeType].map(elem => elem.id))
+		result = {
+			frequency: 500
 		}
+		name = uniqueName(names, "Oscillator");
 	}else if(nodeType == "gain"){
-		return {
-			gain: 1,
-			id: uniqueId(nodeType, state.nodes[nodeType].map(elem => elem.id))
+		result = {
+			gain: 1
 		}
+		name = uniqueName(names, "Gain");
 	}
+	result.connections = {order:[], data: {}, selected: null};
+	return [Immutable.fromJS(result), name];
 }
 
-function uniqueId(prefix, existingIds){
-	var i = 1;
-	while(existingIds.includes(prefix + i++));
-	return prefix + --i;
+function uniqueName(names, prefix){
+	var i = 0;
+	while(names.includes(prefix + ++i));
+	return prefix + i;
 }
 
-function oscillator(state, command){
-	if(command.type == "ADD"){
-		var n = createNode(state, command.nodeType);
-		return Object.assign(
-			{}, 
-			state, 
-			{
-				nodes: Object.assign(
-					{}, 
-					state.nodes, 
-					{
-						[command.nodeType]: state.nodes[command.nodeType].concat(n)
-					})
-			}
-		)
+function reducer(state, command){
+	console.log(command);
+
+
+	if(command.type == "TOGGLE_COLLAPSED"){
+		state = state.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
+	}else if(command.type == "ADD"){
+		var [node, name] = createNode(state.get("names"), command.nodeType);
+		console.log(name);
+		var id = state.get("lastId") + 1;
+		state = state.set("lastId", id);
+		state = state.setIn(["lists", command.nodeType, "nodes", id], node);
+		state = state.updateIn(["lists", command.nodeType, "ids"], list => list.push(id));
+		state = state.setIn(["names", id], name);
+
 	}else if(command.type == "REMOVE"){
-		return Object.assign(
-			{}, 
-			state, 
-			{
-				nodes: Object.assign(
-					{}, 
-					state.nodes, 
-					{
-						[command.nodeType]: state.nodes[command.nodeType].filter(n => n.id != command.id)
-					})
-			}
-		)
+		state = state.deleteIn(["lists", command.nodeType, "nodes", command.id]);
+		state = state.updateIn(["lists", command.nodeType, "ids"], list => list.filter(id => id != command.id));
+
 	}else if(command.type == "MODIFY"){
-		return Object.assign(
-			{}, 
-			state, 
-			{
-				nodes: Object.assign(
-					{}, 
-					state.nodes, 
-					{
-						[command.nodeType]: state.nodes[command.nodeType].map(function(o){
-							if(o.id == command.id){
-								return Object.assign({}, o, {[command.key]: command.value});
-							}else{
-								return o;
-							}
-						})
-					})
-			}
-		)
+		state = state.setIn(["lists", command.nodeType, "nodes", command.id, command.key], command.value);
+
 	}else if(command.type == "TOGGLE_PLAYING"){
-		return Object.assign({}, state, {playing: !state.playing});
+		state = state.update("playing", b => !b);
+
 	}else if(command.type == "CONNECT_FROM"){
-		return Object.assign({}, state, {connecting: {id: command.id, nodeType: command.nodeType}});
+		state = state.set("connecting", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
+
 	}else if(command.type == "CONNECT_TO"){
-		console.log(state.connecting);
-		return Object.assign(
-			{}, 
-			state, 
-			{
-				connecting: null,
-				nodes: Object.assign(
-					{}, 
-					state.nodes, 
-					{
-						[state.connecting.nodeType]: state.nodes[state.connecting.nodeType].map(function(o){
-							if(o.id == state.connecting.id){
-								return Object.assign(
-									{}, 
-									o, 
-									{
-										connect: (o.connect || []).concat(
-											[{id: command.id, param: command.param}]
-										)
-									}
-								);
-							}else{
-								return o;
-							}
-						})
+		var type = state.getIn(["connecting", "nodeType"]);
+		var id = state.getIn(["connecting", "id"]);
+		state = state.set("connecting", null);
+		state = state.updateIn(["lists", type, "nodes", id, "connections"], connections => {
+			var key = command.id + "." + command.param;
+			if(!connections.get("data").has(key)){
+				connections = connections.setIn(
+					["data", key], 
+					Immutable.fromJS({
+						id: command.id,
+						param: command.param
 					})
+				);
+				connections = connections.update("order", list => list.push(key));
 			}
-		)
+			return connections;
+		});
+
 	}else if(command.type == "CONNECT_ABORT"){
-		return Object.assign({}, state, {connecting: null});
-	}else{
-		return state;
+		state = state.set("connecting", null);
+	}else if(command.type == "CONNECTION_SELECT"){
+		state = state.setIn(["lists", command.type, "nodes", command.id, "connections", "selected"], command.key);
 	}
+
+	return state;
 }

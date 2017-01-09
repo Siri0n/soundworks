@@ -1,30 +1,22 @@
 var React = require("react");
+var Header = require("./header.jsx");
+var Connections = require("./connections.jsx");
+var Param = require("./param.jsx");
 
-module.exports = function({data:{id, frequency, connect}, type, connecting, methods: {remove, modify, connectFrom, connectTo, connectAbort}}){
+module.exports = function({id, type, names, connecting, data, 
+	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectionSelect}
+}){
 	return <div className="audio-node">
-		<div className={connecting ? " hidden" : ""}>
-			<div>
-				<span className="name">{id}</span>
-				<span className="close" onClick={() => remove(type, id)}>x</span>
-			</div>
-			<input type="text" defaultValue={frequency} onChange={e => modify(type, id, "frequency", e.target.value)}/>
-			<button onClick={() => connectFrom(type, id)}>Connect</button>
-			{connect ?
-			<div className="connections">
-				<span>Connected to:</span>
-				{connect.map((elem, index) => <span key="index">{elem.id + (elem.param ? "." + elem.param : "")}</span>)}
-			</div> : null}
-		</div>
-		{connecting ? 
-		<div className="connect">
-			{connecting.id == id ?
-			<button onClick={connectAbort}>Cancel</button> :
-			<div>
-				<button onClick={() => connectTo(type, id, "frequency")}>frequency</button>
-			</div>
-			}
-		</div>: 
-		null
-		}
+		<Header name={names.get(id)} 
+			connecting={connecting} 
+			remove={remove.bind(null, type, id, null)} 
+			connectTo={connectTo.bind(null, type, id)}/> 
+		<Param param="frequency" name="Frequency" value={data.get("frequency")} connecting={connecting}
+			connectTo={connectTo.bind(null, type, id)}
+			modify={modify.bind(null, type, id)}/>
+		{connecting && (connecting.get("id") == id) ?
+		<button onClick={() => connectAbort()}>Cancel</button>:
+		<button onClick={() => connectFrom(type, id)}>Connect</button>}
+		<Connections connections={data.get("connections")} names={names} select={connectionSelect.bind(null, type, id)}/>
 	</div>
 }

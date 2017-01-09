@@ -4,12 +4,16 @@ var NodeList = require("./nodeList.jsx");
 var NodesUI = require("./nodesUI");
 
 module.exports = connect(
-	function({nodes, connecting}){
-		return {nodes, connecting};
+	function(state){
+		return {state}
+
 	},
 	function(dispatch){
 		return {
 			methods: {
+				toggleCollapsed(nodeType){
+					dispatch({type: "TOGGLE_COLLAPSED", nodeType})
+				},
 				add(nodeType){
 					dispatch({type: "ADD", nodeType});		
 				},
@@ -23,31 +27,32 @@ module.exports = connect(
 					dispatch({type: "CONNECT_FROM", nodeType, id});
 				},
 				connectTo(nodeType, id, param){
-					dispatch({type: "CONNECT_TO", id, param});
+					dispatch({type: "CONNECT_TO", nodeType, id, param});
 				},
 				connectAbort(){
 					dispatch({type: "CONNECT_ABORT"});
+				},
+				connectionSelect(nodeType, id, key){
+					dispatch({type: "CONNECTION_SELECT", nodeType, id, key});
 				}
 			}
 		}
 	}
 )(
-	function({nodes, connecting, methods, types}){
+	function({state, methods}){
 		return <div> 
-			{types.map(function(type){
-				return <NodeList 
-					key={type}
-					items={nodes[type]}
+			{state.get("order").map(type => {
+				return <NodeList key={type}
+					data={state.getIn(["lists", type])}
+					names={state.get("names")}
 					Node={NodesUI[type]}
-					{
-						...{
-							type,
-							methods,
-							connecting
-						}
-					}
+					connecting={state.get("connecting")}
+					{...{
+						type, 
+						methods
+					}}
 				/>
 			})}
 		</div>
 	}
-)
+);
