@@ -31,6 +31,8 @@ function play(state){
 		var o = nodes[id] = ctx.createOscillator();
 		oscillators.push(o);
 		o.frequency.value = data.get("frequency");
+		o.detune.value = data.get("detune");
+		o.type = data.get("type");
 	});
 	state.getIn(["lists", "gain", "nodes"]).forEach(function(data, id){
 		var g = nodes[id] = ctx.createGain();

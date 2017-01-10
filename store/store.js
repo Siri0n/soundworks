@@ -27,7 +27,9 @@ function createNode(names, nodeType){
 	var result, name;
 	if(nodeType == "oscillator"){
 		result = {
-			frequency: 500
+			frequency: 500,
+			detune: 0,
+			type: "sine"
 		}
 		name = uniqueName(names, "Oscillator");
 	}else if(nodeType == "gain"){
