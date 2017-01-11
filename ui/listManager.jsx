@@ -42,6 +42,10 @@ module.exports = connect(
 	function({state, methods}){
 		return <div> 
 			{state.get("order").map(type => {
+				var waves;
+				if(type == "oscillator"){
+					waves = state.getIn(["lists", "periodicWave"]);
+				}
 				return <NodeList key={type}
 					data={state.getIn(["lists", type])}
 					names={state.get("names")}
@@ -49,7 +53,8 @@ module.exports = connect(
 					connecting={state.get("connecting")}
 					{...{
 						type, 
-						methods
+						methods,
+						waves
 					}}
 				/>
 			})}

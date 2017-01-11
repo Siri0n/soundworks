@@ -3,7 +3,7 @@ var Header = require("./header.jsx");
 var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
 
-module.exports = function({id, type, names, connecting, data, 
+module.exports = function({id, type, names, waves, connecting, data, 
 	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectionSelect}
 }){
 	return <div className="audio-node">
@@ -24,6 +24,9 @@ module.exports = function({id, type, names, connecting, data,
 				<option value="sawtooth">sawtooth</option>
 				<option value="square">square</option>
 				<option value="triangle">triangle</option>
+				{waves.get("ids").map(id => {
+					return <option key={id} value={id}>{"(custom)" + names.get(id)}</option>
+				})}
 			</select>
 		</div>
 		{connecting && (connecting.get("id") == id) ?

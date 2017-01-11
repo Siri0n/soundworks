@@ -25,10 +25,23 @@ div.audio-param > *{
 	margin-bottom: 5px;
 }
 
-div.audio-param > input, div.audio-param > select{
+div.audio-param > input{
 	width: 80px;
 }
 
+div.audio-param > select{
+	width: 120px;
+}
+
+div.coefs{
+	height: 130px;
+	overflow-x: auto;
+	overflow-y: scroll; 
+}
+
+div.coefs input{
+	width: 70px;
+}
 span.name{
 	float: left;
 }

@@ -13,9 +13,14 @@ const initState = Immutable.fromJS({
 			ids: [],
 			nodes: {}
 		},
+		periodicWave: {
+			collapsed: true,
+			ids: [],
+			nodes: {}
+		}
 	},
 	names: {},
-	order: ["oscillator", "gain"],
+	order: ["periodicWave", "oscillator", "gain"],
 	playing: false,
 	connecting: null,
 	lastId: 0
@@ -37,8 +42,17 @@ function createNode(names, nodeType){
 			gain: 1
 		}
 		name = uniqueName(names, "Gain");
+	}else if(nodeType == "periodicWave"){
+		result = {
+			coefs: [
+				[1, 0]
+			]
+		}
+		name = uniqueName(names, "Wave");
 	}
-	result.connections = {order:[], data: {}, selected: null};
+	if(nodeType != "PeriodicWave"){
+		result.connections = {order:[], data: {}, selected: null};
+	}
 	return [Immutable.fromJS(result), name];
 }
 

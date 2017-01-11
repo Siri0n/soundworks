@@ -1,6 +1,6 @@
 var React = require("react");
 
-module.exports = function({data, Node, type, names, methods, connecting}){
+module.exports = function({data, Node, type, names, waves, methods, connecting}){
 	return <div> 
 		<div>
 			{type + " nodes      "} 
@@ -12,7 +12,7 @@ module.exports = function({data, Node, type, names, methods, connecting}){
 				return <Node 
 					key={id} 
 					data={node} 
-					{...{id, type, names, methods, connecting}}/>
+					{...{id, type, names, methods, waves, connecting}}/>
 			})}
 			<button className="add" onClick={() => methods.add(type)}>add</button>
 		</div>}
