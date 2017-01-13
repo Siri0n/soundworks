@@ -77,17 +77,16 @@ function uniqueName(names, prefix){
 function reducer(state, command){
 	console.log(command);
 
-	if(command.type == "TEST"){
-		state = Immutable.fromJS(state.toJS());
-	}else if(command.type == "SET_STATE"){
-		state = Immutable.fromJS(command.data);
+	if(command.type == "SET_STATE"){
+		state = Immutable.fromJS(JSON.parse(command.data));
 	}else if(command.type == "TOGGLE_COLLAPSED"){
 		state = state.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
 	}else if(command.type == "ADD"){
 		var [node, name] = createNode(state.get("names"), command.nodeType);
 		console.log(name);
-		var id = state.get("lastId") + 1 + "";
+		var id = state.get("lastId") + 1;
 		state = state.set("lastId", id);
+		id += "";
 		state = state.setIn(["lists", command.nodeType, "nodes", id], node);
 		state = state.updateIn(["lists", command.nodeType, "ids"], list => list.push(id));
 		state = state.setIn(["names", id], name);

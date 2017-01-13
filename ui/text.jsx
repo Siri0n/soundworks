@@ -10,7 +10,7 @@ module.exports = connect(
 		}
 	}
 )(function({text}){
-	return <div>
+	return <div style={{color: "white"}}>
 		{text}
 	</div>
 })
