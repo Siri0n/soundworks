@@ -1,7 +1,7 @@
 var React = require("react");
-module.exports = function({name, connecting, remove, connectTo}){
+module.exports = function({name, connectable, remove, connectTo}){
 	return <div>
-		<span className={connecting ? "highlighted" : ""} onClick={connecting ? connectTo : null}>
+		<span className={connectable ? "highlighted" : ""} onClick={connectable ? connectTo : null}>
 			{name}
 		</span>
 		<span className="close" onClick={remove}>

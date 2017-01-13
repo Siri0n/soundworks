@@ -7,14 +7,14 @@ module.exports = function({id, type, names, connecting, data,
 	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectionSelect}
 }){
 	return <div className="audio-node">
-		<Header name={names.get(id)} 
-			connecting={connecting} 
+		<Header name={names.get(id)}
+			connectable={connecting && connecting.get("id") != id && connecting.get("nodeType") != "instructions"}
 			remove={remove.bind(null, type, id)} 
 			connectTo={connectTo.bind(null, type, id, null)}/> 
 		<Param param="gain" 
 			name="Gain" 
-			value={data.get("gain")} 
-			connecting={connecting}
+			value={data.get("gain")}
+			connectable={connecting && connecting.get("id") != id}
 			connectTo={connectTo.bind(null, type, id)}
 			modify={modify.bind(null, type, id)}/>
 		{connecting && (connecting.get("id") == id) ?

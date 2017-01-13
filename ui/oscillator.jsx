@@ -7,14 +7,15 @@ module.exports = function({id, type, names, waves, connecting, data,
 	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectionSelect}
 }){
 	return <div className="audio-node">
-		<Header name={names.get(id)} 
-			connecting={connecting} 
-			remove={remove.bind(null, type, id, null)} 
-			connectTo={connectTo.bind(null, type, id)}/> 
-		<Param param="frequency" name="Frequency" value={data.get("frequency")} connecting={connecting}
+		<Header name={names.get(id)}
+			connectable={false}
+			remove={remove.bind(null, type, id, null)} /> 
+		<Param param="frequency" name="Frequency" value={data.get("frequency")} 
+			connectable={connecting && connecting.get("id") != id}
 			connectTo={connectTo.bind(null, type, id)}
 			modify={modify.bind(null, type, id)}/>
-		<Param param="detune" name="Detune" value={data.get("detune")} connecting={connecting}
+		<Param param="detune" name="Detune" value={data.get("detune")} 
+			connectable={connecting && connecting.get("id") != id}
 			connectTo={connectTo.bind(null, type, id)}
 			modify={modify.bind(null, type, id)}/>
 		<div className="audio-param">

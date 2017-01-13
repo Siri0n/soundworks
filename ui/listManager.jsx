@@ -34,6 +34,9 @@ module.exports = connect(
 				},
 				connectionSelect(nodeType, id, key){
 					dispatch({type: "CONNECTION_SELECT", nodeType, id, key});
+				},
+				openEditor(nodeType, id){
+					dispatch({type: "EDIT", nodeType, id});
 				}
 			}
 		}

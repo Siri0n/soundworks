@@ -1,7 +1,7 @@
 var React = require("react");
-module.exports = function({param, name, value, connecting, modify, connectTo}){
+module.exports = function({param, name, value, connectable, modify, connectTo}){
 	return <div className="audio-param">
-		<span className={connecting ? "highlighted" : ""} onClick={connecting ? (() => connectTo(param)): null}>
+		<span className={connectable ? "highlighted" : ""} onClick={connectable ? (() => connectTo(param)): null}>
 			{name + ": "}
 		</span>
 		<input type="text" defaultValue={value} onChange={e => modify(param, e.target.value)}/>

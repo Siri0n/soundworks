@@ -1,18 +1,14 @@
 var React = require("react");
+var Header = require("./header.jsx");
 var Immutable = require("immutable");
 
 module.exports = function({id, type, names, data, 
 	methods: {remove, modify}
 }){
 	return <div className="audio-node">
-		<div>
-			<span>
-				{names.get(id)}
-			</span>
-			<span className="close" onClick={remove}>
-				x
-			</span>
-		</div>
+		<Header name={names.get(id)}
+			connectable={false}
+			remove={remove.bind(null, type, id, null)}/> 
 		<div className="coefs"><table><tbody>
 			{data.get("coefs").map((pair, index) => {
 				return <tr key={index}>

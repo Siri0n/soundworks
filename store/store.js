@@ -17,10 +17,16 @@ const initState = Immutable.fromJS({
 			collapsed: true,
 			ids: [],
 			nodes: {}
+		},
+		instructions: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
 		}
 	},
 	names: {},
-	order: ["periodicWave", "oscillator", "gain"],
+	order: ["instructions", "periodicWave", "oscillator", "gain"],
+	edit: null,
 	playing: false,
 	connecting: null,
 	lastId: 0
@@ -49,6 +55,12 @@ function createNode(names, nodeType){
 			]
 		}
 		name = uniqueName(names, "Wave");
+	}else if(nodeType == "instructions"){
+		result = {
+			text: "",
+			bar: 1
+		}
+		name = uniqueName(names, "Instructions");
 	}
 	if(nodeType != "PeriodicWave"){
 		result.connections = {order:[], data: {}, selected: null};
@@ -65,8 +77,9 @@ function uniqueName(names, prefix){
 function reducer(state, command){
 	console.log(command);
 
-
-	if(command.type == "TOGGLE_COLLAPSED"){
+	if(command.type == "SET_STATE"){
+		state = Immutable.fromJS(JSON.parse(command.data));
+	}else if(command.type == "TOGGLE_COLLAPSED"){
 		state = state.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
 	}else if(command.type == "ADD"){
 		var [node, name] = createNode(state.get("names"), command.nodeType);
@@ -113,6 +126,10 @@ function reducer(state, command){
 		state = state.set("connecting", null);
 	}else if(command.type == "CONNECTION_SELECT"){
 		state = state.setIn(["lists", command.type, "nodes", command.id, "connections", "selected"], command.key);
+	}else if(command.type == "EDIT"){
+		state = state.set("edit", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
+	}else if(command.type == "EDIT_END"){
+		state = state.set("edit", null);
 	}
 
 	return state;
