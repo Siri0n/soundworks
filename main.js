@@ -5,6 +5,7 @@ var UI = require("./ui/ui.jsx");
 var store = window.store = require("./store/store");
 
 window.init = function(data){
+	console.log("olololol", data);
 	store.dispatch({type: "SET_STATE", data});
 }
 var pastebinId = window.location.search.match(/pastebinId=([a-zA-Z0-9]+)/);
