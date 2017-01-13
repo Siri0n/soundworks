@@ -4,18 +4,15 @@ var ReactRedux = require("react-redux");
 var UI = require("./ui/ui.jsx");
 var store = window.store = require("./store/store");
 
+window.init = function(data){
+	store.dispatch({type: "SET_STATE", data});
+}
 var pastebinId = window.location.search.match(/pastebinId=([a-zA-Z0-9]+)/);
 pastebinId = pastebinId && pastebinId[1];
 if(pastebinId){
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", "https://pastebin.com/raw/" + pastebinId, true);
-	xhr.onreadystatechange = function(){
-		console.log("xhr", xhr);
-	}
-	xhr.onload = function(response){
-		store.dispatch({type: "SET_STATE", data: xhr.responseText});
-	}
-	xhr.send(null);
+	var jsonp = document.createElement("script");
+	jsonp.setAttribute("src", "http://pastebin.com/raw/" + pastebinId)
+	document.head.appendChild(jsonp);
 }
 window.onload = () => 
 ReactDOM.render(

@@ -78,7 +78,7 @@ function reducer(state, command){
 	console.log(command);
 
 	if(command.type == "SET_STATE"){
-		state = Immutable.fromJS(JSON.parse(command.data));
+		state = Immutable.fromJS(command.data);
 	}else if(command.type == "TOGGLE_COLLAPSED"){
 		state = state.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
 	}else if(command.type == "ADD"){
