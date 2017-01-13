@@ -8,7 +8,7 @@ var pastebinId = window.location.search.match(/pastebinId=([a-zA-Z0-9]+)/);
 pastebinId = pastebinId && pastebinId[1];
 if(pastebinId){
 	var xhr = new XMLHttpRequest();
-	xhr.open("GET", "http://pastebin.com/raw/" + pastebinId, true);
+	xhr.open("GET", "https://pastebin.com/raw/" + pastebinId, true);
 	xhr.onreadystatechange = function(){
 		console.log("xhr", xhr);
 	}
