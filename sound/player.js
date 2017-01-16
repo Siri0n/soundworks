@@ -38,6 +38,10 @@ function play(state){
 		var i = nodes[id] = new Instructions(ctx, data.get("text"), data.get("bar"));
 		instructions.push(i);
 	});
+	state.getIn(["lists", "delay", "nodes"]).forEach(function(data, id){
+		var d = nodes[id] = ctx.createDelay(data.get("maxDelay"));
+		d.delayTime.value = data.get("delayTime");
+	});
 	state.get("lists").forEach(function(list, type){
 		if(type == "periodicWave"){
 			return true;

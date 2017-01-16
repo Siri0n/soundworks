@@ -19,13 +19,18 @@ const initState = Immutable.fromJS({
 			nodes: {}
 		},
 		instructions: {
+			collapsed: true,
+			ids: [],
+			nodes: {}
+		},
+		delay: {
 			collapsed: false,
 			ids: [],
 			nodes: {}
 		}
 	},
 	names: {},
-	order: ["instructions", "periodicWave", "oscillator", "gain"],
+	order: ["instructions", "periodicWave", "oscillator", "gain", "delay"],
 	edit: null,
 	playing: false,
 	connecting: null,
@@ -61,6 +66,12 @@ function createNode(names, nodeType){
 			bar: 1
 		}
 		name = uniqueName(names, "Instructions");
+	}else if(nodeType == "delay"){
+		result = {
+			maxDelay: 1,
+			delayTime: 1
+		}
+		name = uniqueName(names, "Delay");
 	}
 	if(nodeType != "PeriodicWave"){
 		result.connections = {order:[], data: {}, selected: null};

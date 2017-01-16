@@ -19,8 +19,6 @@ const methods = {
 	"|": "setValueAtTime"
 }
 
-const C4 = 261.63;
-
 function parse(bar, str){
 	var match = str.match(/(\/|\||J) (O|[0-9]+\.[0-9]+|[A-G]#?(?:[0-9]|10)?) ([0-9]+\.[0-9]+|[0-9]+(?:\/[0-9]+)?)/);
 	return match && {
@@ -41,8 +39,8 @@ function freq(str){
 		return str - 0;
 	}else{
 		var match = str.match(/([A-G]#?)([0-9]|10)?/);
-		var deg = notes[match[1]]/12 + ((match[2] - 0) || 0);
-		return Math.pow(2, deg - 4) * C4;
+		var deg = (notes[match[1]] - 9)/12 + ((match[2] - 0) || 0);
+		return Math.pow(2, deg - 4) * 440;
 	}
 }
 
