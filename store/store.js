@@ -1,6 +1,49 @@
 var Redux = require("redux");
 var Immutable = require("immutable");
 
+const customNodeState = {
+	lists:{
+		oscillator: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
+		},
+		gain: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
+		},
+		periodicWave: {
+			collapsed: true,
+			ids: [],
+			nodes: {}
+		},
+		delay: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
+		},
+		custom: {
+			collapsed: true,
+			ids: [],
+			nodes: {}
+		},
+		input: {
+			collapsed: false,
+			ids: [],
+			nodes: {}
+		}
+	},
+	names: {"0": "out"},
+	order: ["input", "custom", "periodicWave", "oscillator", "gain", "delay"],
+	connecting: null,
+	lastId: 0,
+	view: {
+		type: "custom",
+		scope: null
+	}
+};
+
 const initState = Immutable.fromJS({
 	lists:{
 		oscillator: {
@@ -27,14 +70,23 @@ const initState = Immutable.fromJS({
 			collapsed: false,
 			ids: [],
 			nodes: {}
+		},
+		custom: {
+			collapsed: true,
+			ids: [],
+			nodes: {}
 		}
 	},
-	names: {},
-	order: ["instructions", "periodicWave", "oscillator", "gain", "delay"],
+	names: {"0": "out"},
+	order: ["custom", "instructions", "periodicWave", "oscillator", "gain", "delay"],
 	edit: null,
 	playing: false,
 	connecting: null,
-	lastId: 0
+	lastId: 0,
+	view: {
+		type: "root",
+		scope: null
+	}
 });
 
 var store = module.exports = Redux.createStore(reducer, initState);
@@ -87,6 +139,10 @@ function uniqueName(names, prefix){
 
 function reducer(state, command){
 	console.log(command);
+/*	if(state.getIn(["view", "mode"]) != "root"){
+		var path = state.getIn(["view", "path"]);
+		return state.updateIn(path, nestedState => reducer(nestedState, command));
+	}*/
 
 	if(command.type == "SET_STATE"){
 		state = Immutable.fromJS(JSON.parse(command.data));
@@ -105,7 +161,25 @@ function reducer(state, command){
 	}else if(command.type == "REMOVE"){
 		state = state.deleteIn(["lists", command.nodeType, "nodes", command.id]);
 		state = state.updateIn(["lists", command.nodeType, "ids"], list => list.filter(id => id != command.id));
-
+		state = state.update("names", names => names.delete(command.id));
+		if(command.nodeType != "periodicWave"){
+			state.get("lists").forEach((list, type) => {
+				list.get("nodes").forEach((node, id) => {
+					state = state.updateIn(["lists", type, "nodes", id, "connections", "data"], 
+						data => data.filter(elem => elem.get("id") != command.id));
+					state = state.updateIn(["lists", type, "nodes", id, "connections", "order"], 
+						order => order.filter(elem => elem.split(".")[0] != command.id));
+					return true;
+				});
+				return true;
+			});
+		}else{
+			state = state.updateIn(["lists", "oscillator", "nodes"], 
+				nodes => nodes.map(
+					node => node.update("type", type => type == command.id ? "sine" : type)
+				)
+			);
+		}
 	}else if(command.type == "MODIFY"){
 		state = state.setIn(["lists", command.nodeType, "nodes", command.id, command.key], command.value);
 
@@ -120,7 +194,7 @@ function reducer(state, command){
 		var id = state.getIn(["connecting", "id"]);
 		state = state.set("connecting", null);
 		state = state.updateIn(["lists", type, "nodes", id, "connections"], connections => {
-			var key = command.id + "." + command.param;
+			var key = command.id + (command.param ? "." + command.param : "");
 			if(!connections.get("data").has(key)){
 				connections = connections.setIn(
 					["data", key], 
@@ -130,14 +204,19 @@ function reducer(state, command){
 					})
 				);
 				connections = connections.update("order", list => list.push(key));
+				connections = connections.set("selected", key);
 			}
 			return connections;
 		});
 
 	}else if(command.type == "CONNECT_ABORT"){
 		state = state.set("connecting", null);
-	}else if(command.type == "CONNECTION_SELECT"){
-		state = state.setIn(["lists", command.type, "nodes", command.id, "connections", "selected"], command.key);
+	}else if(command.type == "CONNECT_REMOVE"){
+		state = state.deleteIn(["lists", command.nodeType, "nodes", command.id, "connections", "data", command.key]);
+		state = state.updateIn(["lists", command.nodeType, "nodes", command.id, "connections", "order"], 
+			list => list.filter(key => key != command.key));
+	}else if(command.type == "CONNECT_SELECT"){
+		state = state.setIn(["lists", command.nodeType, "nodes", command.id, "connections", "selected"], command.key);
 	}else if(command.type == "EDIT"){
 		state = state.set("edit", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
 	}else if(command.type == "EDIT_END"){

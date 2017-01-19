@@ -1,15 +1,16 @@
 var Instructions = require("./instructions.js");
 
+var ctx = new (window.AudioContext || window.webkitAudioContext)();
 var nodes = {};
 var oscillators = [];
 var instructions = [];
-var ctx = new (window.AudioContext || window.webkitAudioContext)();
 
 function isWaveform(type){
 	return ["sine", "sawtooth", "square", "triangle"].includes(type);
 }
 
 function play(state){
+	nodes[0] = ctx.destination;
 	state.getIn(["lists", "periodicWave", "nodes"]).forEach(function(data, id){
 		var r = new Float32Array(data.get("coefs").map(elem => elem.get(0)).unshift(0).toJS());
 		var i = new Float32Array(data.get("coefs").map(elem => elem.get(1)).unshift(0).toJS());
@@ -48,18 +49,16 @@ function play(state){
 		}
 		list.get("nodes").forEach(function(data, id){
 			var node = nodes[id];
-			console.log(data);
 			if(data.getIn(["connections", "data"]).size){
 				data.getIn(["connections", "data"]).forEach(function(elem, id){
 					var target = nodes[elem.get("id")];
+					console.log("target", target);
 					if(elem.get("param")){
 						node.connect(target[elem.get("param")]);
 					}else{
 						node.connect(target);
 					}
 				})
-			}else{
-				(type != "instructions") && node.connect(ctx.destination);
 			}
 			return true;
 		});

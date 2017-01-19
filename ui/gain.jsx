@@ -4,7 +4,7 @@ var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
 
 module.exports = function({id, type, names, connecting, data, 
-	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectionSelect}
+	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect}
 }){
 	return <div className="audio-node">
 		<Header name={names.get(id)}
@@ -22,6 +22,7 @@ module.exports = function({id, type, names, connecting, data,
 		<button onClick={() => connectFrom(type, id)}>Connect</button>}
 		<Connections connections={data.get("connections")} 
 			names={names} 
-			select={connectionSelect.bind(null, type, id)}/>
+			select={connectSelect.bind(null, type, id)}
+			remove={connectRemove.bind(null, type, id)}/>
 	</div>
 }

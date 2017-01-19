@@ -1,9 +1,9 @@
 var React = require("react");
 
-module.exports = function({connections, names, select}){
+module.exports = function({connections, names, select, remove}){
 	return <div className="connections">
 		Connected to:
-		<select defaultValue={connections.get("selected")} onChange={() => select(event.target.value)}>
+		<select value={connections.get("selected") || ""} onChange={() => select(event.target.value)}>
 			{connections.get("order").map(key => {
 				var elem = connections.getIn(["data", key]);
 				var name = names.get(elem.get("id"));
@@ -12,6 +12,6 @@ module.exports = function({connections, names, select}){
 			})}
 		</select>
 		<button disabled={!connections.get("selected")} 
-			onClick={() => this.props.connectRemove(...connections.get("selected").split("."))}>X</button>
+			onClick={() => {console.log(connections.get("selected")), remove(connections.get("selected"))}}>X</button>
 	</div>
 }

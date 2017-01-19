@@ -3,5 +3,6 @@ module.exports = {
 	gain: require("./gain.jsx"),
 	periodicWave: require("./periodicWave.jsx"),
 	instructions: require("./instructions.jsx"),
-	delay: require("./delay.jsx")
+	delay: require("./delay.jsx"),
+	custom: require("./customNode.jsx")
 };
