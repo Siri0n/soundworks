@@ -124,6 +124,14 @@ function createNode(names, nodeType){
 			delayTime: 1
 		}
 		name = uniqueName(names, "Delay");
+	}else if(nodeType == "custom"){
+		result = customNodeState;
+		name = uniqueName(names, "Custom");
+	}else if(nodeType == "input"){
+		result = {
+			offset: 1
+		}
+		name = uniqueName(names, "Input");
 	}
 	if(nodeType != "PeriodicWave"){
 		result.connections = {order:[], data: {}, selected: null};
@@ -139,61 +147,74 @@ function uniqueName(names, prefix){
 
 function reducer(state, command){
 	console.log(command);
-/*	if(state.getIn(["view", "mode"]) != "root"){
-		var path = state.getIn(["view", "path"]);
-		return state.updateIn(path, nestedState => reducer(nestedState, command));
-	}*/
+
+	var view = state;
+	var viewPath = Immutable.List();
+	var parentPath = null;
+
+	while(view.getIn(["view", "scope"])){
+		parentPath = viewPath;
+		viewPath = viewPath.concat(view.getIn(["view", "scope"]));
+		view = view.getIn(view.getIn(["view", "scope"]));
+	}
 
 	if(command.type == "SET_STATE"){
-		state = Immutable.fromJS(JSON.parse(command.data));
+		view = Immutable.fromJS(JSON.parse(command.data));
 	}else if(command.type == "TOGGLE_COLLAPSED"){
-		state = state.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
+		view = view.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
 	}else if(command.type == "ADD"){
-		var [node, name] = createNode(state.get("names"), command.nodeType);
-		console.log(name);
-		var id = state.get("lastId") + 1;
-		state = state.set("lastId", id);
+		var [node, name] = createNode(view.get("names"), command.nodeType);
+		var id = view.get("lastId") + 1;
+		view = view.set("lastId", id);
 		id += "";
-		state = state.setIn(["lists", command.nodeType, "nodes", id], node);
-		state = state.updateIn(["lists", command.nodeType, "ids"], list => list.push(id));
-		state = state.setIn(["names", id], name);
+		view = view.setIn(["lists", command.nodeType, "nodes", id], node);
+		view = view.updateIn(["lists", command.nodeType, "ids"], list => list.push(id));
+		view = view.setIn(["names", id], name);
 
 	}else if(command.type == "REMOVE"){
-		state = state.deleteIn(["lists", command.nodeType, "nodes", command.id]);
-		state = state.updateIn(["lists", command.nodeType, "ids"], list => list.filter(id => id != command.id));
-		state = state.update("names", names => names.delete(command.id));
-		if(command.nodeType != "periodicWave"){
-			state.get("lists").forEach((list, type) => {
+		view = view.deleteIn(["lists", command.nodeType, "nodes", command.id]);
+		view = view.updateIn(["lists", command.nodeType, "ids"], list => list.filter(id => id != command.id));
+		view = view.update("names", names => names.delete(command.id));
+		if(command.nodeType == "periodicWave"){
+			view = view.updateIn(["lists", "oscillator", "nodes"], 
+				nodes => nodes.map(
+					node => node.update("type", type => type == command.id ? "sine" : type)
+				)
+			);
+		}else if(command.nodeType == "input"){
+			//здесь должно быть сложное дерьмо, удаляющее коннекты к этому инпуту во вьюхе уровнем выше
+			alert("Дверь запили!");
+		}else{
+			view.get("lists").forEach((list, type) => {
 				list.get("nodes").forEach((node, id) => {
-					state = state.updateIn(["lists", type, "nodes", id, "connections", "data"], 
+					view = view.updateIn(["lists", type, "nodes", id, "connections", "data"], 
 						data => data.filter(elem => elem.get("id") != command.id));
-					state = state.updateIn(["lists", type, "nodes", id, "connections", "order"], 
+					view = view.updateIn(["lists", type, "nodes", id, "connections", "order"], 
 						order => order.filter(elem => elem.split(".")[0] != command.id));
 					return true;
 				});
 				return true;
 			});
-		}else{
-			state = state.updateIn(["lists", "oscillator", "nodes"], 
-				nodes => nodes.map(
-					node => node.update("type", type => type == command.id ? "sine" : type)
-				)
-			);
 		}
 	}else if(command.type == "MODIFY"){
-		state = state.setIn(["lists", command.nodeType, "nodes", command.id, command.key], command.value);
+		if(command.nodeType != "custom"){
+			view = view.setIn(["lists", command.nodeType, "nodes", command.id, command.key], command.value);
+		}else{
+			view = view.setIn(["lists", command.nodeType, "nodes", command.id, 
+				"lists", "input", command.key, "offset"], command.value);
+		}
 
 	}else if(command.type == "TOGGLE_PLAYING"){
-		state = state.update("playing", b => !b);
+		view = view.update("playing", b => !b);
 
 	}else if(command.type == "CONNECT_FROM"){
-		state = state.set("connecting", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
+		view = view.set("connecting", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
 
 	}else if(command.type == "CONNECT_TO"){
-		var type = state.getIn(["connecting", "nodeType"]);
-		var id = state.getIn(["connecting", "id"]);
-		state = state.set("connecting", null);
-		state = state.updateIn(["lists", type, "nodes", id, "connections"], connections => {
+		var type = view.getIn(["connecting", "nodeType"]);
+		var id = view.getIn(["connecting", "id"]);
+		view = view.set("connecting", null);
+		view = view.updateIn(["lists", type, "nodes", id, "connections"], connections => {
 			var key = command.id + (command.param ? "." + command.param : "");
 			if(!connections.get("data").has(key)){
 				connections = connections.setIn(
@@ -210,17 +231,31 @@ function reducer(state, command){
 		});
 
 	}else if(command.type == "CONNECT_ABORT"){
-		state = state.set("connecting", null);
+		view = view.set("connecting", null);
+
 	}else if(command.type == "CONNECT_REMOVE"){
-		state = state.deleteIn(["lists", command.nodeType, "nodes", command.id, "connections", "data", command.key]);
-		state = state.updateIn(["lists", command.nodeType, "nodes", command.id, "connections", "order"], 
+		view = view.deleteIn(["lists", command.nodeType, "nodes", command.id, "connections", "data", command.key]);
+		view = view.updateIn(["lists", command.nodeType, "nodes", command.id, "connections", "order"], 
 			list => list.filter(key => key != command.key));
+
 	}else if(command.type == "CONNECT_SELECT"){
-		state = state.setIn(["lists", command.nodeType, "nodes", command.id, "connections", "selected"], command.key);
-	}else if(command.type == "EDIT"){
-		state = state.set("edit", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
-	}else if(command.type == "EDIT_END"){
-		state = state.set("edit", null);
+		view = view.setIn(["lists", command.nodeType, "nodes", command.id, "connections", "selected"], command.key);
+
+	}else if(command.type == "EDIT_INSTRUCTIONS"){
+		view = view.set("edit", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
+
+	}else if(command.type == "EDIT_INSTRUCTIONS_END"){
+		view = view.set("edit", null);
+	}else if(command.type == "EDIT_CUSTOM"){
+		view = view.setIn(["view", "scope"], ["lists", command.nodeType, "nodes", command.id]);
+	}else if(command.type == "EDIT_CUSTOM_END"){
+		state = state.setIn([...parentPath, "view", "scope"], null);
+	}
+
+	if(viewPath.size){
+		state = state.setIn(viewPath, view);
+	}else{
+		state = view;
 	}
 
 	return state;

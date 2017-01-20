@@ -14,7 +14,6 @@ function play(state){
 	state.getIn(["lists", "periodicWave", "nodes"]).forEach(function(data, id){
 		var r = new Float32Array(data.get("coefs").map(elem => elem.get(0)).unshift(0).toJS());
 		var i = new Float32Array(data.get("coefs").map(elem => elem.get(1)).unshift(0).toJS());
-		console.log(r, i);
 		nodes[id] = ctx.createPeriodicWave(r, i, {disableNormalization: true});
 		
 	});
@@ -27,7 +26,6 @@ function play(state){
 		if(isWaveform(type)){
 			o.type = type;
 		}else{
-			console.log(nodes[type]);
 			o.setPeriodicWave(nodes[type]);
 		}
 	});
@@ -52,7 +50,6 @@ function play(state){
 			if(data.getIn(["connections", "data"]).size){
 				data.getIn(["connections", "data"]).forEach(function(elem, id){
 					var target = nodes[elem.get("id")];
-					console.log("target", target);
 					if(elem.get("param")){
 						node.connect(target[elem.get("param")]);
 					}else{
@@ -74,7 +71,6 @@ function stop(){
 	oscillators = [];
 	instructions.forEach(i => i.stop());
 	instructions = [];
-	console.log("Stop right there, criminal scum!");
 }
 
 module.exports = {play, stop}

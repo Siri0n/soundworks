@@ -47,8 +47,14 @@ module.exports = connect(
 				connectSelect(nodeType, id, key){
 					dispatch({type: "CONNECT_SELECT", nodeType, id, key});
 				},
+				editCustomNode(nodeType, id){
+					dispatch({type: "EDIT_CUSTOM", nodeType, id});
+				},
 				openEditor(nodeType, id){
-					dispatch({type: "EDIT", nodeType, id});
+					dispatch({type: "EDIT_INSTRUCTIONS", nodeType, id});
+				},
+				closeEditor(){
+					dispatch({type: "EDIT_INSTRUCTIONS_END"});
 				},
 				togglePlaying(){
 					dispatch({type: "TOGGLE_PLAYING"});
@@ -68,7 +74,7 @@ module.exports = connect(
 				<ListManager state={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "out", "0", null)}/>
 				<Synthesizer state={view} togglePlaying={methods.togglePlaying}/>
-				<Editor state={view} edit={methods.edit} close={methods.close}/>
+				<Editor state={view} edit={methods.modify} closeEditor={methods.closeEditor}/>
 			</div>
 		}else if(view.getIn(["view", "type"]) == "custom"){
 			return <div> 

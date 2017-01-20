@@ -12,6 +12,6 @@ module.exports = function({connections, names, select, remove}){
 			})}
 		</select>
 		<button disabled={!connections.get("selected")} 
-			onClick={() => {console.log(connections.get("selected")), remove(connections.get("selected"))}}>X</button>
+			onClick={() => remove(connections.get("selected"))}>X</button>
 	</div>
 }

@@ -9,7 +9,6 @@ module.exports = function({data, Node, type, names, waves, methods, connecting})
 		{!data.get("collapsed") && <div className="nodeList">
 			{data.get("ids").map(id => {
 				var node = data.getIn(["nodes", id]);
-				console.log(node, data.toJS(), id);
 				return <Node 
 					key={id} 
 					data={node} 
