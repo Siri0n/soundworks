@@ -3,29 +3,37 @@ var Header = require("./header.jsx");
 var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
 
-module.exports = function({id, type, names, connecting, data, 
-	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, editCustomNode}
+function join_(arg1, arg2){
+	return arg1 + (arg2 ? ("_" + arg2) : "");
+}
+
+module.exports = function({id, type, nodes, connecting, data, 
+	methods: {remove, modifyDeep, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, editCustomNode}
 }){
 	return <div className="audio-node">
-		<Header name={names.get(id)}
+		<Header name={data.get("name")}
 			connectable={false}
-			remove={remove.bind(null, type, id, null)}/>
+			remove={remove.bind(null, id)}/>
 
-		{data.getIn(["lists", "input", "ids"]).map(inputId => {
-			return 	<Param key={inputId} param={inputId} 
-				name={data.get("names").get(inputId)} 
-				value={data.getIn(["lists", "input", "nodes", inputId, "offset"])} 
-				connectable={connecting && connecting.get("id") != id}
-				connectTo={connectTo.bind(null, type, id)}
-				modify={modify.bind(null, type, id)}/>
+		{data.getIn(["nodes", "-1", "connections", "order"]).map(key => {
+			var [exportId, param] = key.split(".");
+			var connectable = connecting && connecting.get("id") != id;
+			return <div className="audio-param">
+				<span className={connectable ? "highlighted" : ""} 
+					onClick={connectable ? connectTo.bind(null, id, join_(exportId, param)) : null}>
+					{name + param ? ": " : ""}
+				</span>
+				{param && <input type="text" defaultValue={data.getIn(["nodes", exportId, param])} 
+					onChange={e => modifyDeep(["nodes", exportId, param], e.target.value)}/>}
+			</div>
 		})}
-		<button onClick={() => editCustomNode(type, id)}>Edit</button>
+		<button onClick={() => editCustomNode(id)}>Edit</button>
 		{connecting && (connecting.get("id") == id) ?
 		<button onClick={connectAbort}>Cancel</button>:
-		<button onClick={() => connectFrom(type, id)}>Connect</button>}
+		<button onClick={() => connectFrom(id)}>Connect</button>}
 		<Connections connections={data.get("connections")} 
-			names={names} 
-			select={connectSelect.bind(null, type, id)}
-			remove={connectRemove.bind(null, type, id)}/>
+			nodes={nodes} 
+			select={connectSelect.bind(null, id)}
+			remove={connectRemove.bind(null, id)}/>
 	</div>
 }

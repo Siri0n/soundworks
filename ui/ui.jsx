@@ -3,16 +3,8 @@ var ListManager = require("./listManager.jsx");
 var Synthesizer = require("./synthesizer.jsx");
 var Editor = require("./editor.jsx");
 var Out = require("./out.jsx");
+var Exports = require("./exports.jsx");
 var connect = require("react-redux").connect;
-
-/*module.exports = function(){
-	return <div>
-		<ListManager/>
-		<Synthesizer/>
-		<Editor/>
-		<Text/>
-	</div>
-}	*/
 
 
 module.exports = connect(
@@ -20,38 +12,41 @@ module.exports = connect(
 	dispatch => {
 		return {
 			methods:{
-				toggleCollapsed(nodeType){
-					dispatch({type: "TOGGLE_COLLAPSED", nodeType})
+				toggleCollapsed(list){
+					dispatch({type: "TOGGLE_COLLAPSED", list})
 				},
-				add(nodeType){
-					dispatch({type: "ADD", nodeType});		
+				create(nodeType){
+					dispatch({type: "CREATE_NODE", nodeType});		
 				},
-				remove(nodeType, id){
-					dispatch({type: "REMOVE", nodeType, id});
+				remove(id){
+					dispatch({type: "DELETE_NODE", id});
 				},
-				modify(nodeType, id, key, value){
-					dispatch({type: "MODIFY", nodeType, id, key, value});
+				modify(id, key, value){
+					dispatch({type: "MODIFY", id, key, value});
 				},
-				connectFrom(nodeType, id){
-					dispatch({type: "CONNECT_FROM", nodeType, id});
+				connectFrom(id){
+					dispatch({type: "CONNECT_FROM", id});
 				},
-				connectTo(nodeType, id, param){
-					dispatch({type: "CONNECT_TO", nodeType, id, param});
+				connectTo(id, param){
+					dispatch({type: "CONNECT_TO", id, param});
 				},
 				connectAbort(){
 					dispatch({type: "CONNECT_ABORT"});
 				},
-				connectRemove(nodeType, id, key){
-					dispatch({type: "CONNECT_REMOVE", nodeType, id, key});
+				connectRemove(id, key){
+					dispatch({type: "CONNECT_REMOVE", id, key});
 				},
-				connectSelect(nodeType, id, key){
-					dispatch({type: "CONNECT_SELECT", nodeType, id, key});
+				connectSelect(id, key){
+					dispatch({type: "CONNECT_SELECT", id, key});
 				},
-				editCustomNode(nodeType, id){
-					dispatch({type: "EDIT_CUSTOM", nodeType, id});
+				editCustomNode(id){
+					dispatch({type: "EDIT_CUSTOM", id});
 				},
-				openEditor(nodeType, id){
-					dispatch({type: "EDIT_INSTRUCTIONS", nodeType, id});
+				closeCustomNode(){
+					dispatch({type: "EDIT_CUSTOM_END"})
+				},
+				openEditor(id){
+					dispatch({type: "EDIT_INSTRUCTIONS", id});
 				},
 				closeEditor(){
 					dispatch({type: "EDIT_INSTRUCTIONS_END"});
@@ -65,23 +60,25 @@ module.exports = connect(
 )(
 	function({state, methods}){
 		var view = state;
-		while(view.getIn(["view", "scope"])){
-			view = view.getIn(view.getIn(["view", "scope"]))
+		while(view.get("scope")){
+			view = view.getIn(view.get("scope"))
 		}
 
-		if(view.getIn(["view", "type"]) == "root"){
+		var type = view.get("nodeType");
+		if(type == "root"){
 			return <div> 
 				<ListManager state={view} methods={methods}/>
-				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "out", "0", null)}/>
+				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Synthesizer state={view} togglePlaying={methods.togglePlaying}/>
 				<Editor state={view} edit={methods.modify} closeEditor={methods.closeEditor}/>
 			</div>
-		}else if(view.getIn(["view", "type"]) == "custom"){
+		}else if(type == "custom"){
 			return <div> 
 				<ListManager state={view} methods={methods}/>
+				<Exports state={view} methods={methods}/>
 			</div>
 		}else{
-			return <div>Something goes wrong...</div>
+			return <div>Something goes wrong... Type is {type}</div>
 		}
 	}
 );

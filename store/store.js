@@ -1,143 +1,105 @@
 var Redux = require("redux");
 var Immutable = require("immutable");
 
-const customNodeState = {
-	lists:{
-		oscillator: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		},
-		gain: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		},
-		periodicWave: {
-			collapsed: true,
-			ids: [],
-			nodes: {}
-		},
-		delay: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		},
-		custom: {
-			collapsed: true,
-			ids: [],
-			nodes: {}
-		},
-		input: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		}
-	},
-	names: {"0": "out"},
-	order: ["input", "custom", "periodicWave", "oscillator", "gain", "delay"],
-	connecting: null,
-	lastId: 0,
-	view: {
-		type: "custom",
-		scope: null
-	}
-};
-
-const initState = Immutable.fromJS({
-	lists:{
-		oscillator: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		},
-		gain: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		},
-		periodicWave: {
-			collapsed: true,
-			ids: [],
-			nodes: {}
-		},
-		instructions: {
-			collapsed: true,
-			ids: [],
-			nodes: {}
-		},
-		delay: {
-			collapsed: false,
-			ids: [],
-			nodes: {}
-		},
-		custom: {
-			collapsed: true,
-			ids: [],
-			nodes: {}
-		}
-	},
-	names: {"0": "out"},
-	order: ["custom", "instructions", "periodicWave", "oscillator", "gain", "delay"],
-	edit: null,
-	playing: false,
-	connecting: null,
-	lastId: 0,
-	view: {
-		type: "root",
-		scope: null
-	}
+const listTemplate = Immutable.fromJS({
+	collapsed: false,
+	nodes: []
 });
 
-var store = module.exports = Redux.createStore(reducer, initState);
+const connectionsTemplate = Immutable.fromJS({
+	data: {},
+	order: [],
+	selected: null,
+	incoming: {}
+});
 
-function createNode(names, nodeType){
-	var result, name;
-	if(nodeType == "oscillator"){
-		result = {
-			frequency: 500,
-			detune: 0,
-			type: "sine"
+const viewTemplate = Immutable.fromJS({
+	nodes: {
+		"0": {
+			nodeType: "out",
+			name: "out",
+			connections: connectionsTemplate 
 		}
-		name = uniqueName(names, "Oscillator");
-	}else if(nodeType == "gain"){
-		result = {
-			gain: 1
-		}
-		name = uniqueName(names, "Gain");
-	}else if(nodeType == "periodicWave"){
-		result = {
-			coefs: [
-				[1, 0]
-			]
-		}
-		name = uniqueName(names, "Wave");
-	}else if(nodeType == "instructions"){
-		result = {
-			text: "",
-			bar: 1
-		}
-		name = uniqueName(names, "Instructions");
-	}else if(nodeType == "delay"){
-		result = {
-			maxDelay: 1,
-			delayTime: 1
-		}
-		name = uniqueName(names, "Delay");
-	}else if(nodeType == "custom"){
-		result = customNodeState;
-		name = uniqueName(names, "Custom");
-	}else if(nodeType == "input"){
-		result = {
-			offset: 1
-		}
-		name = uniqueName(names, "Input");
-	}
-	if(nodeType != "PeriodicWave"){
-		result.connections = {order:[], data: {}, selected: null};
-	}
-	return [Immutable.fromJS(result), name];
+	},
+	connecting: null,
+	lastId: 0,
+	scope: null
+});
+
+function createLists(view, arr){
+	view = view.set(
+		"listOrder", 
+		Immutable.fromJS(arr)
+	);
+	view = view.set("lists", Immutable.fromJS({}));
+	view.get("listOrder").forEach(key => {
+		view = view.setIn(["lists", key], listTemplate);
+		return true;
+	});
+	return view;
 }
+
+const mainViewTemplate = createLists(
+	viewTemplate, 
+	[
+		"instruction",
+		"wave",
+		"custom",
+		"oscillator",
+		"gain",
+		"delay"
+	]
+).set("nodeType", "root");
+
+
+const customViewTemplate = createLists(
+	viewTemplate, 
+	[
+		"wave",
+		"custom",
+		"oscillator",
+		"gain",
+		"delay"
+	]
+).set("name", "Custom")
+.setIn(["nodes", "-1"], Immutable.fromJS({
+	nodeType: "exports",
+	name: "exports",
+	connections: connectionsTemplate
+}));
+
+const nodeTemplates = Immutable.fromJS({
+	oscillator: {
+		name: "Oscillator",
+		frequency: 500,
+		detune: 0,
+		type: "sine"
+	},
+	gain: {
+		name: "Gain",
+		gain: 1
+	},
+	delay: {
+		name: "Delay",
+		delayTime: 1,
+		maxDelay: 1
+	},
+	wave: {
+		name: "Wave",
+		coefs: [[1, 0]]
+	},
+	instruction: {
+		name: "Instruction",
+		bar: 1,
+		text: ""
+	},
+	custom: customViewTemplate
+}).map(template => template.set("connections", connectionsTemplate))
+.map((template, type) => template.set("nodeType", type));
+
+
+
+var store = module.exports = Redux.createStore(reducer, mainViewTemplate);
 
 function uniqueName(names, prefix){
 	var i = 0;
@@ -145,78 +107,81 @@ function uniqueName(names, prefix){
 	return prefix + i;
 }
 
+function join(arg1, arg2){
+	return arg1 + (arg2 ? ("." + arg2) : "");
+}
+
+
+
 function reducer(state, command){
 	console.log(command);
+
+	if(command.type == "SET_STATE"){
+		return Immutable.fromJS(JSON.parse(command.data));
+	}
 
 	var view = state;
 	var viewPath = Immutable.List();
 	var parentPath = null;
 
-	while(view.getIn(["view", "scope"])){
+	while(view.get("scope")){
 		parentPath = viewPath;
-		viewPath = viewPath.concat(view.getIn(["view", "scope"]));
-		view = view.getIn(view.getIn(["view", "scope"]));
+		viewPath = viewPath.concat(view.get("scope"));
+		view = view.getIn(view.get("scope"));
 	}
 
-	if(command.type == "SET_STATE"){
-		view = Immutable.fromJS(JSON.parse(command.data));
-	}else if(command.type == "TOGGLE_COLLAPSED"){
-		view = view.updateIn(["lists", command.nodeType, "collapsed"], b => !b);
-	}else if(command.type == "ADD"){
-		var [node, name] = createNode(view.get("names"), command.nodeType);
-		var id = view.get("lastId") + 1;
+	if(command.type == "TOGGLE_COLLAPSED"){
+		view = view.updateIn(["lists", command.list, "collapsed"], b => !b);
+
+	}else if(command.type == "CREATE_NODE"){
+		let id = view.get("lastId") + 1;
 		view = view.set("lastId", id);
 		id += "";
-		view = view.setIn(["lists", command.nodeType, "nodes", id], node);
-		view = view.updateIn(["lists", command.nodeType, "ids"], list => list.push(id));
-		view = view.setIn(["names", id], name);
+		let node = nodeTemplates.get(command.nodeType).update("name", 
+			name => uniqueName(view.get("nodes").map(node => node.get("name")), name)
+		);
+		view = view.setIn(["nodes", id], node);
+		view = view.updateIn(["lists", command.nodeType, "nodes"], list => list.push(id));
 
-	}else if(command.type == "REMOVE"){
-		view = view.deleteIn(["lists", command.nodeType, "nodes", command.id]);
-		view = view.updateIn(["lists", command.nodeType, "ids"], list => list.filter(id => id != command.id));
-		view = view.update("names", names => names.delete(command.id));
-		if(command.nodeType == "periodicWave"){
-			view = view.updateIn(["lists", "oscillator", "nodes"], 
-				nodes => nodes.map(
-					node => node.update("type", type => type == command.id ? "sine" : type)
-				)
-			);
-		}else if(command.nodeType == "input"){
-			//здесь должно быть сложное дерьмо, удаляющее коннекты к этому инпуту во вьюхе уровнем выше
-			alert("Дверь запили!");
+	}else if(command.type == "DELETE_NODE"){
+		let incoming = view.getIn(["nodes", command.id, "connections", "incoming"]);
+		let type = view.getIn(["nodes", command.id, "nodeType"]);
+		view = view.deleteIn(["nodes", command.id]);
+		view = view.updateIn(["lists", type, "nodes"], list => list.filter(id => id != command.id));
+		if(type == "wave"){
+			//some oscillator shit
 		}else{
-			view.get("lists").forEach((list, type) => {
-				list.get("nodes").forEach((node, id) => {
-					view = view.updateIn(["lists", type, "nodes", id, "connections", "data"], 
-						data => data.filter(elem => elem.get("id") != command.id));
-					view = view.updateIn(["lists", type, "nodes", id, "connections", "order"], 
-						order => order.filter(elem => elem.split(".")[0] != command.id));
-					return true;
-				});
-				return true;
+			incoming.forEach((key, inkey) => {
+				let [id, param] = inkey.split(".");
+				view = view.deleteIn(["nodes", id, "connections", "data", key]);
+				view = view.updateIn(["nodes", id, "connections", "order"], 
+					list => list.filter(item => item != key));
 			});
 		}
+
 	}else if(command.type == "MODIFY"){
-		if(command.nodeType != "custom"){
-			view = view.setIn(["lists", command.nodeType, "nodes", command.id, command.key], command.value);
-		}else{
-			view = view.setIn(["lists", command.nodeType, "nodes", command.id, 
-				"lists", "input", command.key, "offset"], command.value);
-		}
+		let path = command.path || [command.key];
+		view = view.setIn(["nodes", command.id, ...path], command.value);
 
 	}else if(command.type == "TOGGLE_PLAYING"){
 		view = view.update("playing", b => !b);
 
 	}else if(command.type == "CONNECT_FROM"){
-		view = view.set("connecting", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
+		view = view.set("connecting", 
+			Immutable.fromJS({
+				id: command.id, 
+				type: view.getIn(["nodes", command.id, "type"])
+			})
+		);
 
 	}else if(command.type == "CONNECT_TO"){
-		var type = view.getIn(["connecting", "nodeType"]);
-		var id = view.getIn(["connecting", "id"]);
+		let {id, type} = view.get("connecting").toJS();
+		let key = join(command.id, command.param);
+		let success = false;
 		view = view.set("connecting", null);
-		view = view.updateIn(["lists", type, "nodes", id, "connections"], connections => {
-			var key = command.id + (command.param ? "." + command.param : "");
+		view = view.updateIn(["nodes", id, "connections"], connections => {
 			if(!connections.get("data").has(key)){
+				success = true;
 				connections = connections.setIn(
 					["data", key], 
 					Immutable.fromJS({
@@ -229,27 +194,37 @@ function reducer(state, command){
 			}
 			return connections;
 		});
+		if(success){
+			view = view.setIn(["nodes", command.id, "connections", "incoming", join(id, command.param)], key);
+		}
 
 	}else if(command.type == "CONNECT_ABORT"){
 		view = view.set("connecting", null);
 
 	}else if(command.type == "CONNECT_REMOVE"){
-		view = view.deleteIn(["lists", command.nodeType, "nodes", command.id, "connections", "data", command.key]);
-		view = view.updateIn(["lists", command.nodeType, "nodes", command.id, "connections", "order"], 
+		view = view.deleteIn(["nodes", command.id, "connections", "data", command.key]);
+		view = view.updateIn(["nodes", command.id, "connections", "order"], 
 			list => list.filter(key => key != command.key));
+		view = view.setIn(["nodes", command.id, "connections", "selected"],
+			view.getIn(["nodes", command.id, "connections", "order", 0]));
+		let [id, param] = command.key.split("");
+		view = view.deleteIn(["nodes", id, "connections", "incoming", join(command.id, param)]);
 
-	}else if(command.type == "CONNECT_SELECT"){
-		view = view.setIn(["lists", command.nodeType, "nodes", command.id, "connections", "selected"], command.key);
+	}else if(command.type == "CONNECTION_SELECT"){
+		view = view.setIn(["nodes", command.id, "connections", "selected"], command.key);
 
 	}else if(command.type == "EDIT_INSTRUCTIONS"){
-		view = view.set("edit", Immutable.fromJS({id: command.id, nodeType: command.nodeType}));
+		view = view.set("edit", command.id);
 
 	}else if(command.type == "EDIT_INSTRUCTIONS_END"){
 		view = view.set("edit", null);
+
 	}else if(command.type == "EDIT_CUSTOM"){
-		view = view.setIn(["view", "scope"], ["lists", command.nodeType, "nodes", command.id]);
+		view = view.set("scope", ["nodes", command.id]);
+
 	}else if(command.type == "EDIT_CUSTOM_END"){
 		state = state.setIn([...parentPath, "view", "scope"], null);
+
 	}
 
 	if(viewPath.size){

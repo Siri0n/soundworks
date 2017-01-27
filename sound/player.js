@@ -1,23 +1,34 @@
 var Instructions = require("./instructions.js");
+var Immutable = require("immutable");
 
-var ctx = new (window.AudioContext || window.webkitAudioContext)();
-var nodes = {};
-var oscillators = [];
-var instructions = [];
+var ctx, main;
+
+function createContext(){
+	return new (window.AudioContext || window.webkitAudioContext)();
+}
 
 function isWaveform(type){
 	return ["sine", "sawtooth", "square", "triangle"].includes(type);
 }
 
-function play(state){
+function forAllNodesOfType(type, view, cb){
+	view.getIn(["lists", type, "nodes"])
+	.forEach(id => cb(view.getIn(["nodes", id]), id))
+}
+
+function ComplexNode(ctx, view){
+	var nodes = {};
+	var oscillators = [];
+	var instructions = [];
 	nodes[0] = ctx.destination;
-	state.getIn(["lists", "periodicWave", "nodes"]).forEach(function(data, id){
+
+	forAllNodesOfType("wave", view, function(data, id){
 		var r = new Float32Array(data.get("coefs").map(elem => elem.get(0)).unshift(0).toJS());
 		var i = new Float32Array(data.get("coefs").map(elem => elem.get(1)).unshift(0).toJS());
 		nodes[id] = ctx.createPeriodicWave(r, i, {disableNormalization: true});
-		
 	});
-	state.getIn(["lists", "oscillator", "nodes"]).forEach(function(data, id){
+
+	forAllNodesOfType("oscillator", view, function(data, id){
 		var o = nodes[id] = ctx.createOscillator();
 		oscillators.push(o);
 		o.frequency.value = data.get("frequency");
@@ -29,48 +40,65 @@ function play(state){
 			o.setPeriodicWave(nodes[type]);
 		}
 	});
-	state.getIn(["lists", "gain", "nodes"]).forEach(function(data, id){
+
+	forAllNodesOfType("gain", view, function(data, id){
 		var g = nodes[id] = ctx.createGain();
 		g.gain.value = data.get("gain");
 	});
-	state.getIn(["lists", "instructions", "nodes"]).forEach(function(data, id){
+
+	forAllNodesOfType("instruction", view, function(data, id){
 		var i = nodes[id] = new Instructions(ctx, data.get("text"), data.get("bar"));
 		instructions.push(i);
 	});
-	state.getIn(["lists", "delay", "nodes"]).forEach(function(data, id){
+
+	forAllNodesOfType("delay", view, function(data, id){
 		var d = nodes[id] = ctx.createDelay(data.get("maxDelay"));
 		d.delayTime.value = data.get("delayTime");
 	});
-	state.get("lists").forEach(function(list, type){
-		if(type == "periodicWave"){
-			return true;
-		}
-		list.get("nodes").forEach(function(data, id){
-			var node = nodes[id];
-			if(data.getIn(["connections", "data"]).size){
-				data.getIn(["connections", "data"]).forEach(function(elem, id){
-					var target = nodes[elem.get("id")];
-					if(elem.get("param")){
-						node.connect(target[elem.get("param")]);
-					}else{
-						node.connect(target);
-					}
-				})
+
+	view.get("nodes").forEach(function(data, id){
+		var node = nodes[id];
+		data.getIn(["connections", "data"]).forEach(function(elem){
+			var target = nodes[elem.get("id")];
+			if(elem.get("param")){
+				node.connect(target[elem.get("param")]);
+			}else{
+				node.connect(target);
 			}
-			return true;
 		});
 		return true;
 	});
-	oscillators.forEach(o => o.start());
-	instructions.forEach(i => i.start());
+
+	this.start = function(){
+		oscillators.forEach(o => o.start());
+		instructions.forEach(i => i.start());
+	}
+
+	this.stop = function(){
+		oscillators.forEach(o => o.stop());
+		instructions.forEach(i => i.stop());
+	}
+
+	this.connect = function(){
+		//niy
+	}
+
+	this.disconnect = function(){
+		//niy
+	}
+}
+
+function play(state){
+	ctx = createContext();
+	main = new ComplexNode(ctx, state);
+	main.start();
 }
 
 function stop(){
-	nodes = {};
-	oscillators.forEach(o => o.stop());
-	oscillators = [];
-	instructions.forEach(i => i.stop());
-	instructions = [];
+	main.stop();
+	main = null;
+	ctx.close();
+	ctx = null;
 }
 
 module.exports = {play, stop}

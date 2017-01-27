@@ -3,26 +3,26 @@ var Header = require("./header.jsx");
 var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
 
-module.exports = function({id, type, names, connecting, data, 
+module.exports = function({id, type, nodes, connecting, data, 
 	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect}
 }){
 	return <div className="audio-node">
-		<Header name={names.get(id)}
-			connectable={connecting && connecting.get("id") != id && connecting.get("nodeType") != "instructions"}
-			remove={remove.bind(null, type, id)} 
-			connectTo={connectTo.bind(null, type, id, null)}/> 
+		<Header name={data.get("name")}
+			connectable={connecting && connecting.get("id") != id && connecting.get("type") != "instructions"}
+			remove={remove.bind(null, id)} 
+			connectTo={connectTo.bind(null, id, null)}/> 
 		<Param param="gain" 
 			name="Gain" 
 			value={data.get("gain")}
 			connectable={connecting && connecting.get("id") != id}
-			connectTo={connectTo.bind(null, type, id)}
-			modify={modify.bind(null, type, id)}/>
+			connectTo={connectTo.bind(null, id)}
+			modify={modify.bind(null, id)}/>
 		{connecting && (connecting.get("id") == id) ?
 		<button onClick={connectAbort}>Cancel</button>:
-		<button onClick={() => connectFrom(type, id)}>Connect</button>}
+		<button onClick={() => connectFrom(id)}>Connect</button>}
 		<Connections connections={data.get("connections")} 
-			names={names} 
-			select={connectSelect.bind(null, type, id)}
-			remove={connectRemove.bind(null, type, id)}/>
+			nodes={nodes} 
+			select={connectSelect.bind(null, id)}
+			remove={connectRemove.bind(null, id)}/>
 	</div>
 }

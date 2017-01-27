@@ -1,8 +1,8 @@
 module.exports = {
 	oscillator: require("./oscillator.jsx"),
 	gain: require("./gain.jsx"),
-	periodicWave: require("./periodicWave.jsx"),
-	instructions: require("./instructions.jsx"),
+	wave: require("./wave.jsx"),
+	instruction: require("./instruction.jsx"),
 	delay: require("./delay.jsx"),
 	custom: require("./customNode.jsx"),
 	input: require("./input.jsx")

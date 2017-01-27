@@ -23,7 +23,9 @@ gulp.task("default", ["browserify"]);
 function bundle(){
 	console.log("Transforming...");
 	return b.bundle()
-		.on("error", console.log.bind(console, "error"))
+		.on("error", function(error){
+			console.log(error + "");
+		})
 		.on("end", console.log.bind(console, "Transform was successful"))
 		.pipe(source("bundle.js"))
 		.pipe(gulp.dest("./"));
