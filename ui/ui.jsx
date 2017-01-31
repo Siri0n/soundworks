@@ -24,6 +24,9 @@ module.exports = connect(
 				modify(id, key, value){
 					dispatch({type: "MODIFY", id, key, value});
 				},
+				modifyDeep(id, path, value){
+					dispatch({type: "MODIFY", id, path, value});
+				},
 				connectFrom(id){
 					dispatch({type: "CONNECT_FROM", id});
 				},
@@ -75,6 +78,7 @@ module.exports = connect(
 		}else if(type == "custom"){
 			return <div> 
 				<ListManager state={view} methods={methods}/>
+				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Exports state={view} methods={methods}/>
 			</div>
 		}else{

@@ -12,15 +12,23 @@ function isWaveform(type){
 }
 
 function forAllNodesOfType(type, view, cb){
-	view.getIn(["lists", type, "nodes"])
-	.forEach(id => cb(view.getIn(["nodes", id]), id))
+	var nodes = view.getIn(["lists", type, "nodes"])
+	nodes && nodes.forEach(id => cb(view.getIn(["nodes", id]), id))
 }
 
 function ComplexNode(ctx, view){
+	var self = this;
 	var nodes = {};
 	var oscillators = [];
 	var instructions = [];
-	nodes[0] = ctx.destination;
+	var customs = [];
+	var type = view.get("nodeType");
+	if(type == "root"){
+		nodes[0] = ctx.destination;
+	}else{
+		nodes[0] = ctx.createGain();
+		nodes[0].gain.value = 1;
+	}
 
 	forAllNodesOfType("wave", view, function(data, id){
 		var r = new Float32Array(data.get("coefs").map(elem => elem.get(0)).unshift(0).toJS());
@@ -56,8 +64,26 @@ function ComplexNode(ctx, view){
 		d.delayTime.value = data.get("delayTime");
 	});
 
+	forAllNodesOfType("custom", view, function(data, id){
+		var c = nodes[id] = new ComplexNode(ctx, data);
+		customs.push(c);
+	});
+
+	var exp = view.getIn(["nodes", "-1", "connections", "data"]);
+
+	exp && exp.forEach((data, key) => {
+		var key_ = key.replace(".", "_");
+		var node = nodes[data.get("id")];
+		var param = data.get("param");
+		self[key_] = param ? node[param] : node;
+		return true;
+	})
+
 	view.get("nodes").forEach(function(data, id){
 		var node = nodes[id];
+		if(!node){
+			return true;
+		}
 		data.getIn(["connections", "data"]).forEach(function(elem){
 			var target = nodes[elem.get("id")];
 			if(elem.get("param")){
@@ -72,15 +98,17 @@ function ComplexNode(ctx, view){
 	this.start = function(){
 		oscillators.forEach(o => o.start());
 		instructions.forEach(i => i.start());
+		customs.forEach(c => c.start());
 	}
 
 	this.stop = function(){
 		oscillators.forEach(o => o.stop());
 		instructions.forEach(i => i.stop());
+		customs.forEach(c => c.stop());
 	}
 
-	this.connect = function(){
-		//niy
+	this.connect = function(arg){
+		nodes[0].connect(arg);
 	}
 
 	this.disconnect = function(){

@@ -8,7 +8,11 @@ module.exports = function({connections, nodes, select, remove}){
 				var elem = connections.getIn(["data", key]);
 				var name = nodes.get(elem.get("id")).get("name");
 				var param = elem.get("param");
-				return <option key={key} value={key}>{name + (param ? "." + param : "")}</option>
+				var paramName = param;
+				if(nodes.getIn([elem.get("id"),"nodeType"]) == "custom"){
+					paramName = nodes.getIn([elem.get("id"), "nodes", "-1", "connections", "data", param.replace("_", "."), "name"]);
+				}
+				return <option key={key} value={key}>{name + (paramName ? "." + paramName : "")}</option>
 			})}
 		</select>
 		<button disabled={!connections.get("selected")} 
