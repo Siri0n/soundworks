@@ -3,9 +3,9 @@ var ListManager = require("./listManager.jsx");
 var Synthesizer = require("./synthesizer.jsx");
 var Editor = require("./editor.jsx");
 var Out = require("./out.jsx");
+var SaveLoad = require("./saveload.jsx");
 var Exports = require("./exports.jsx");
 var connect = require("react-redux").connect;
-
 
 module.exports = connect(
 	state => ({state}),
@@ -56,6 +56,9 @@ module.exports = connect(
 				},
 				togglePlaying(){
 					dispatch({type: "TOGGLE_PLAYING"});
+				},
+				load(data){
+					dispatch({type: "LOAD", data});
 				}
 			}
 		}
@@ -80,6 +83,7 @@ module.exports = connect(
 				<ListManager state={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Exports state={view} methods={methods}/>
+				<SaveLoad state={view} load={methods.load}/>
 			</div>
 		}else{
 			return <div>Something goes wrong... Type is {type}</div>

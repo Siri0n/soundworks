@@ -116,6 +116,52 @@ function join_(arg1, arg2){
 }
 
 
+function createNode(view, type, template){
+	let id = view.get("lastId") + 1;
+	view = view.set("lastId", id);
+	id += "";
+	let node = template.update("name", 
+		name => uniqueName(view.get("nodes").map(node => node.get("name")), name)
+	);
+	view = view.setIn(["nodes", id], node);
+	view = view.updateIn(["lists", type, "nodes"], list => list.push(id));
+	return view;
+}
+
+function deleteNode(view, nodeId){
+	let incoming = view.getIn(["nodes", nodeId, "connections", "incoming"]);
+	let type = view.getIn(["nodes", nodeId, "nodeType"]);
+	view = view.deleteIn(["nodes", nodeId]);
+	view = view.updateIn(["lists", type, "nodes"], list => list.filter(id => id != nodeId));
+	if(type == "wave"){
+		view.update("nodes", 
+			nodes => nodes.map(node => {
+				if(node.get("type") == nodeId){
+					node.set("type", "sine");
+				}
+				return node;
+			})
+		)
+	}else{
+		incoming.forEach((key, inkey) => {
+			let [id, param] = inkey.split(".");
+			if(id == "-1"){
+				view.getIn(["connections", "incoming"]).forEach((key1, inkey1) => {
+					console.log(key1, inkey1, key, inkey);
+					let [id1, param1] = inkey1.split(".");
+					if(param1 == key.replace(".", "_")){
+						parentView = removeConnection(parentView, id1, key1);
+					}
+				})
+			}
+			view = view.deleteIn(["nodes", id, "connections", "data", key]);
+			view = view.updateIn(["nodes", id, "connections", "order"], 
+				list => list.filter(item => item != key));
+		});
+	}
+	return view;
+}
+
 function removeConnection(view, nodeId, key){
 	console.log("remove", view.toJS(), nodeId, key);
 	view = view.deleteIn(["nodes", nodeId, "connections", "data", key]);
@@ -131,9 +177,6 @@ function removeConnection(view, nodeId, key){
 function reducer(state, command){
 	console.log(command);
 
-	if(command.type == "SET_STATE"){
-		return Immutable.fromJS(JSON.parse(command.data));
-	}
 
 	var view = state;
 	var viewPath = Immutable.List();
@@ -152,52 +195,26 @@ function reducer(state, command){
 			parentView = state;
 		}
 	}
+	if(command.type == "LOAD"){
+		if(!parentView){
+			throw new Error("dafuq?");
+		}
+		parentView = deleteNode(parentView, parentView.getIn(["scope", 1]));
+		let template = Immutable.fromJS(JSON.parse(command.data));
+		parentView = createNode(parentView, "custom", template);
+		parentView = parentView.set(
+			"scope", 
+			Immutable.fromJS(["nodes", parentView.get("lastId") + ""])
+		);
 
-	if(command.type == "TOGGLE_COLLAPSED"){
+	}else if(command.type == "TOGGLE_COLLAPSED"){
 		view = view.updateIn(["lists", command.list, "collapsed"], b => !b);
 
 	}else if(command.type == "CREATE_NODE"){
-		let id = view.get("lastId") + 1;
-		view = view.set("lastId", id);
-		id += "";
-		let node = nodeTemplates.get(command.nodeType).update("name", 
-			name => uniqueName(view.get("nodes").map(node => node.get("name")), name)
-		);
-		view = view.setIn(["nodes", id], node);
-		view = view.updateIn(["lists", command.nodeType, "nodes"], list => list.push(id));
+		view = createNode(view, command.nodeType, nodeTemplates.get(command.nodeType));
 
 	}else if(command.type == "DELETE_NODE"){
-		let incoming = view.getIn(["nodes", command.id, "connections", "incoming"]);
-		let type = view.getIn(["nodes", command.id, "nodeType"]);
-		view = view.deleteIn(["nodes", command.id]);
-		view = view.updateIn(["lists", type, "nodes"], list => list.filter(id => id != command.id));
-		if(type == "wave"){
-			view.update("nodes", 
-				nodes => nodes.map(node => {
-					if(node.get("type") == command.id){
-						node.set("type", "sine");
-					}
-					return node;
-				})
-			)
-		}else{
-			incoming.forEach((key, inkey) => {
-				let [id, param] = inkey.split(".");
-				if(id == "-1"){
-					view.getIn(["connections", "incoming"]).forEach((key1, inkey1) => {
-						console.log(key1, inkey1, key, inkey);
-						let [id1, param1] = inkey1.split(".");
-						if(param1 == key.replace(".", "_")){
-							parentView = removeConnection(parentView, id1, key1);
-						}
-					})
-				}
-				view = view.deleteIn(["nodes", id, "connections", "data", key]);
-				view = view.updateIn(["nodes", id, "connections", "order"], 
-					list => list.filter(item => item != key));
-			});
-		}
-
+		view = deleteNode(view, command.id);		
 
 	}else if(command.type == "MODIFY"){
 		let path = command.path || [command.key];
@@ -263,7 +280,7 @@ function reducer(state, command){
 		view = view.set("edit", null);
 
 	}else if(command.type == "EDIT_CUSTOM"){
-		view = view.set("scope", ["nodes", command.id]);
+		view = view.set("scope", Immutable.fromJS(["nodes", command.id]));
 
 	}else if(command.type == "EDIT_CUSTOM_END"){
 		parentView = parentView.set("scope", null);
