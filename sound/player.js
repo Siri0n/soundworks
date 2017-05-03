@@ -69,30 +69,30 @@ function ComplexNode(ctx, view){
 		customs.push(c);
 	});
 
-	var exp = view.getIn(["nodes", "-1", "connections", "data"]);
+	var exp = view.get("connections").filter(c => c.getIn(["from", "id"]) == "-1");
 
-	exp && exp.forEach((data, key) => {
-		var key_ = key.replace(".", "_");
-		var node = nodes[data.get("id")];
-		var param = data.get("param");
-		self[key_] = param ? node[param] : node;
+	exp.forEach((c, cid) => {
+		var {id, param} = c.get("to").toJS();
+		var node = nodes[id];
+		self[cid] = param ? node[param] : node;
 		return true;
 	})
 
-	view.get("nodes").forEach(function(data, id){
-		var node = nodes[id];
-		if(!node){
+	view.get("connections").forEach((c, cid) => {
+		c = c.toJS();
+		var nodeFrom = nodes[c.from.id],
+			nodeTo = nodes[c.to.id];
+		if(!nodeFrom || !nodeTo){
 			return true;
 		}
-		data.getIn(["connections", "data"]).forEach(function(elem){
-			var target = nodes[elem.get("id")];
-			if(elem.get("param")){
-				node.connect(target[elem.get("param")]);
-			}else{
-				node.connect(target);
-			}
-		});
-		return true;
+		if(c.from.param){
+			throw new Error("Not implemented yet");
+		}
+		if(c.to.param){
+			nodeFrom.connect(nodeTo[c.to.param]);
+		}else{
+			nodeFrom.connect(nodeTo);
+		}
 	});
 
 	this.start = function(){

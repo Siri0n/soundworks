@@ -1,8 +1,5 @@
 var React = require("react");
-
-function join(arg1, arg2){
-	return arg1 + (arg2 ? ("." + arg2) : "");
-}
+var Immutable = require("immutable");
 
 function Export({name, keyname, rename, remove}){
 	return <div>
@@ -12,21 +9,32 @@ function Export({name, keyname, rename, remove}){
 	</div>
 } 
 
-module.exports = function({state, methods: {modifyDeep, connectRemove, connectAbort, connectFrom, closeCustomNode}}){
-	var connections = state.getIn(["nodes", "-1", "connections"]);
-	var connecting = state.get("connecting")
+module.exports = function({state, methods: {connectRename, connectRemove, connectAbort, connectFrom, closeCustomNode}}){
+	var connections = state.get("connections")
+		.filter(c => c.getIn(["from", "id"]) == "-1")
+		.entrySeq()
+		.sort((c1, c2) => c1[0] - c2[0]);
+
+	var connecting = state.get("connecting");
 	return <div className="exports">
 		{connecting && (connecting.get("id") == "-1") ?
 		<button onClick={connectAbort}>Cancel</button>:
 		<button onClick={() => connectFrom("-1")}>Export</button>}
 		<button onClick={closeCustomNode}>Close</button>
-		{connections.get("order").map(key => {
-			var data = connections.getIn(["data", key]);
-			var nodeName = state.getIn(["nodes", data.get("id"), "name"]);
-			var keyname = join(nodeName, data.get("param"));
-			return <Export name={data.get("name")} key={key} keyname={keyname}
-				rename={modifyDeep.bind(null, "-1", ["connections", "data", key, "name"])}
-				remove={connectRemove.bind(null, "-1", key)}/>
+		{connections.map(([id, c]) => {
+			var toNode = state.getIn(["nodes", c.getIn(["to", "id"])]);
+			var nodeName = toNode.get("name");
+			var param = c.getIn(["to", "param"]);
+			var paramName;
+			if(toNode.get("nodeType") == "custom"){
+				paramName = toNode.getIn(["connections", param, "name"]);
+			}else{
+				paramName = param;
+			}
+			var keyname = [nodeName, paramName].join(".");
+			return <Export key={id} name={c.get("name")} id={id} keyname={keyname}
+				rename={connectRename.bind(null, id)}
+				remove={connectRemove.bind(null, id)}/>
 		})}
 	</div>
 }

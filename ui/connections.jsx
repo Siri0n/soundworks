@@ -1,21 +1,25 @@
 var React = require("react");
 
-module.exports = function({connections, nodes, select, remove}){
+module.exports = function({connections, selected, nodes, select, remove}){
 	return <div className="connections">
 		Connected to:
-		<select value={connections.get("selected") || ""} onChange={() => select(event.target.value)}>
-			{connections.get("order").map(key => {
-				var elem = connections.getIn(["data", key]);
-				var name = nodes.get(elem.get("id")).get("name");
-				var param = elem.get("param");
-				var paramName = param;
-				if(nodes.getIn([elem.get("id"),"nodeType"]) == "custom"){
-					paramName = nodes.getIn([elem.get("id"), "nodes", "-1", "connections", "data", param.replace("_", "."), "name"]);
+		<select value={selected === null ? "" : selected} onChange={e => select(e.target.value)}>
+			{connections.map(([id, c]) => {
+				var toId = c.getIn(["to", "id"]);
+				var name = nodes.getIn([toId, "name"]);
+				var toParam = c.getIn(["to", "param"]);
+				var fromParam = c.getIn(["from", "param"]);
+				var paramName = toParam;
+
+				if(nodes.getIn([toId, "nodeType"]) == "custom"){
+					paramName = nodes.getIn([toId, "connections", toParam, "name"]);
 				}
-				return <option key={key} value={key}>{name + (paramName ? "." + paramName : "")}</option>
+				return <option key={id} value={id}>
+					{(fromParam ? "[" + fromParam + "]" : "") + name + (paramName ? "." + paramName : "")}
+				</option>
 			})}
 		</select>
-		<button disabled={!connections.get("selected")} 
-			onClick={() => remove(connections.get("selected"))}>X</button>
+		<button disabled={!selected} 
+			onClick={() => remove(selected)}>X</button>
 	</div>
 }

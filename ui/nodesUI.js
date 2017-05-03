@@ -4,6 +4,5 @@ module.exports = {
 	wave: require("./wave.jsx"),
 	instruction: require("./instruction.jsx"),
 	delay: require("./delay.jsx"),
-	custom: require("./customNode.jsx"),
-	input: require("./input.jsx")
+	custom: require("./customNode.jsx")
 };

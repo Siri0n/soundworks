@@ -27,6 +27,9 @@ module.exports = connect(
 				modifyDeep(id, path, value){
 					dispatch({type: "MODIFY", id, path, value});
 				},
+				setCustomParam(id, connectionId, value){
+					dispatch({type: "MODIFY_CUSTOM", id, connectionId, value});
+				},
 				connectFrom(id){
 					dispatch({type: "CONNECT_FROM", id});
 				},
@@ -36,17 +39,20 @@ module.exports = connect(
 				connectAbort(){
 					dispatch({type: "CONNECT_ABORT"});
 				},
-				connectRemove(id, key){
-					dispatch({type: "CONNECT_REMOVE", id, key});
+				connectRemove(connectionId){
+					dispatch({type: "CONNECT_REMOVE", connectionId});
 				},
-				connectSelect(id, key){
-					dispatch({type: "CONNECT_SELECT", id, key});
+				connectRename(connectionId, name){
+					dispatch({type: "CONNECT_RENAME", connectionId, name});
+				},
+				connectSelect(connectionId){
+					dispatch({type: "CONNECT_SELECT", connectionId});
 				},
 				editCustomNode(id){
 					dispatch({type: "EDIT_CUSTOM", id});
 				},
 				closeCustomNode(){
-					dispatch({type: "EDIT_CUSTOM_END"})
+					dispatch({type: "EDIT_CUSTOM_END"});
 				},
 				openEditor(id){
 					dispatch({type: "EDIT_INSTRUCTIONS", id});
@@ -73,14 +79,14 @@ module.exports = connect(
 		var type = view.get("nodeType");
 		if(type == "root"){
 			return <div> 
-				<ListManager state={view} methods={methods}/>
+				<ListManager view={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Synthesizer state={view} togglePlaying={methods.togglePlaying}/>
 				<Editor state={view} edit={methods.modify} closeEditor={methods.closeEditor}/>
 			</div>
 		}else if(type == "custom"){
 			return <div> 
-				<ListManager state={view} methods={methods}/>
+				<ListManager view={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Exports state={view} methods={methods}/>
 				<SaveLoad state={view} load={methods.load}/>

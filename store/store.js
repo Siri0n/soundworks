@@ -1,26 +1,23 @@
 var Redux = require("redux");
 var Immutable = require("immutable");
 
+const EXPORTS_ID = "-1";
+const OUT_ID = "0"
+
 const listTemplate = Immutable.fromJS({
 	collapsed: false,
 	nodes: []
 });
 
-const connectionsTemplate = Immutable.fromJS({
-	data: {},
-	order: [],
-	selected: null,
-	incoming: {}
-});
 
 const viewTemplate = Immutable.fromJS({
 	nodes: {
-		"0": {
+		[OUT_ID]: {
 			nodeType: "out",
-			name: "out",
-			connections: connectionsTemplate 
+			name: "out"
 		}
 	},
+	connections: {},
 	connecting: null,
 	lastId: 0,
 	scope: null
@@ -62,10 +59,10 @@ const customViewTemplate = createLists(
 		"delay"
 	]
 ).set("name", "Custom")
-.setIn(["nodes", "-1"], Immutable.fromJS({
+.setIn(["nodes", EXPORTS_ID], Immutable.fromJS({
 	nodeType: "exports",
 	name: "exports",
-	connections: connectionsTemplate
+	selectedConnection: null
 }));
 
 const nodeTemplates = Immutable.fromJS({
@@ -94,7 +91,7 @@ const nodeTemplates = Immutable.fromJS({
 		text: ""
 	},
 	custom: customViewTemplate
-}).map(template => template.set("connections", connectionsTemplate))
+}).map(template => template.set("selectedConnection", null))
 .map((template, type) => template.set("nodeType", type));
 
 
@@ -107,19 +104,15 @@ function uniqueName(names, prefix){
 	return prefix + i;
 }
 
-function join(arg1, arg2){
-	return arg1 + (arg2 ? ("." + arg2) : "");
-}
-
-function join_(arg1, arg2){
-	return arg1 + (arg2 ? ("_" + arg2) : "");
+function newId(view){
+	var id = view.get("lastId") + 1;
+	return [view.set("lastId", id), id + ""];
 }
 
 
 function createNode(view, type, template){
-	let id = view.get("lastId") + 1;
-	view = view.set("lastId", id);
-	id += "";
+	let id;
+	[view, id] = newId(view);
 	let node = template.update("name", 
 		name => uniqueName(view.get("nodes").map(node => node.get("name")), name)
 	);
@@ -128,8 +121,7 @@ function createNode(view, type, template){
 	return view;
 }
 
-function deleteNode(view, nodeId){
-	let incoming = view.getIn(["nodes", nodeId, "connections", "incoming"]);
+function deleteNode(state, view, path, nodeId){
 	let type = view.getIn(["nodes", nodeId, "nodeType"]);
 	view = view.deleteIn(["nodes", nodeId]);
 	view = view.updateIn(["lists", type, "nodes"], list => list.filter(id => id != nodeId));
@@ -143,60 +135,72 @@ function deleteNode(view, nodeId){
 			})
 		)
 	}else{
-		incoming.forEach((key, inkey) => {
-			let [id, param] = inkey.split(".");
-			if(id == "-1"){
-				view.getIn(["connections", "incoming"]).forEach((key1, inkey1) => {
-					console.log(key1, inkey1, key, inkey);
-					let [id1, param1] = inkey1.split(".");
-					if(param1 == key.replace(".", "_")){
-						parentView = removeConnection(parentView, id1, key1);
-					}
-				})
+		view.update("connections", 
+			list => list.filter(c => c.getIn(["from", "id"]) != nodeId)
+		);
+		view.get("connections").forEach((c, cid) => {
+			if(c.getIn(["to", "id"]) == nodeId){
+				[state, view] = removeConnection(state, view, path, cid);
 			}
-			view = view.deleteIn(["nodes", id, "connections", "data", key]);
-			view = view.updateIn(["nodes", id, "connections", "order"], 
-				list => list.filter(item => item != key));
-		});
+			return true;
+		})
 	}
-	return view;
+	return [state, view];
 }
 
-function removeConnection(view, nodeId, key){
-	console.log("remove", view.toJS(), nodeId, key);
-	view = view.deleteIn(["nodes", nodeId, "connections", "data", key]);
-	view = view.updateIn(["nodes", nodeId, "connections", "order"], 
-		list => list.filter(key => key != key));
-	view = view.setIn(["nodes", nodeId, "connections", "selected"],
-		view.getIn(["nodes", nodeId, "connections", "order", 0]));
-	let [id, param] = key.split("");
-	view = view.deleteIn(["nodes", id, "connections", "incoming", join(nodeId, param)]);
-	return view;
+function removeConnection(state, view, path, connectionId){
+	var connection = view.getIn(["connections", connectionId]);
+	var fromId = connection.getIn(["from", "id"]);
+	if(fromId == EXPORTS_ID){
+		let parentPath = getParentPath(path);
+		let viewId = path.last();
+		let parentView = state.getIn(parentPath);
+		parentView.get("connections").forEach((c, cid) => {
+			if(c.getIn(["to", "id"]) == viewId && c.getIn(["to", "param"]) == connectionId){
+				[state, parentView] = removeConnection(state, parentView, parentPath, cid);
+			}
+			return true;
+		});
+		state = setView(state, parentView, parentPath);
+	}else{
+		view = view.updateIn(["nodes", fromId, "selectedConnection"], 
+			cid => cid == connectionId ? null : cid);
+	}
+	view = view.update("connections", connections => connections.filter((c, cid) => cid != connectionId));
+	return [state, view];
+}
+
+function getView(state){
+	var view = state;
+	var viewPath = Immutable.List();
+	while(view.get("scope")){
+		viewPath = viewPath.concat(view.get("scope"));
+		view = view.getIn(view.get("scope"));
+	}
+	return [view, viewPath];
+}
+
+function setView(state, view, viewPath){
+	if(viewPath.size){
+		state = state.setIn(viewPath, view);
+	}else{
+		state = view;
+	}
+	return state;
+}
+
+function getParentPath(path){
+	return path.splice(-2);
 }
 
 function reducer(state, command){
 	console.log(command);
 
 
-	var view = state;
-	var viewPath = Immutable.List();
-	var parentPath = null;
-	var parentView = null;
-	while(view.get("scope")){
-		parentPath = viewPath;
-		viewPath = viewPath.concat(view.get("scope"));
-		view = view.getIn(view.get("scope"));
-	}
+	var [view, viewPath] = getView(state);
 
-	if(parentPath){
-		if(parentPath.size){
-			parentView = state.getIn(parentPath);
-		}else{
-			parentView = state;
-		}
-	}
 	if(command.type == "LOAD"){
-		if(!parentView){
+/*		if(!parentView){
 			throw new Error("dafuq?");
 		}
 		parentView = deleteNode(parentView, parentView.getIn(["scope", 1]));
@@ -205,7 +209,7 @@ function reducer(state, command){
 		parentView = parentView.set(
 			"scope", 
 			Immutable.fromJS(["nodes", parentView.get("lastId") + ""])
-		);
+		);*/
 
 	}else if(command.type == "TOGGLE_COLLAPSED"){
 		view = view.updateIn(["lists", command.list, "collapsed"], b => !b);
@@ -214,11 +218,21 @@ function reducer(state, command){
 		view = createNode(view, command.nodeType, nodeTemplates.get(command.nodeType));
 
 	}else if(command.type == "DELETE_NODE"){
-		view = deleteNode(view, command.id);		
+		[state, view] = deleteNode(state, view, viewPath, command.id);		
 
 	}else if(command.type == "MODIFY"){
 		let path = command.path || [command.key];
 		view = view.setIn(["nodes", command.id, ...path], command.value);
+
+	}else if(command.type == "MODIFY_CUSTOM"){
+		let path = ["nodes", command.id];
+		let param = command.connectionId;
+		while(view.getIn(path).get("nodeType") == "custom"){
+			let c = view.getIn([...path, "connections", param]).toJS();
+			path = [...path, "nodes", c.to.id];
+			param = c.to.param;
+		}
+		view = view.setIn([...path, param], command.value);
 
 	}else if(command.type == "TOGGLE_PLAYING"){
 		view = view.update("playing", b => !b);
@@ -226,52 +240,55 @@ function reducer(state, command){
 	}else if(command.type == "CONNECT_FROM"){
 		view = view.set("connecting", 
 			Immutable.fromJS({
-				id: command.id, 
-				type: view.getIn(["nodes", command.id, "nodeType"])
+				id: command.id,
+				param: command.param
 			})
 		);
 
 	}else if(command.type == "CONNECT_TO"){
-		let {id, type} = view.get("connecting").toJS();
-		let key = join(command.id, command.param);
-		let success = false;
-		view = view.set("connecting", null);
-		view = view.updateIn(["nodes", id, "connections"], connections => {
-			if(!connections.get("data").has(key)){
-				success = true;
-				connections = connections.setIn(
-					["data", key], 
-					Immutable.fromJS({
-						id: command.id,
-						param: command.param
-					})
-				);
-				connections = connections.update("order", list => list.push(key));
-				connections = connections.set("selected", key);
-			}
-			return connections;
+		let {id, param} = view.get("connecting").toJS();
+		let connectionId;
+		[view, connectionId] = newId(view);
+		let connection = Immutable.fromJS({
+			from: {id, param},
+			to: {id: command.id, param: command.param}
 		});
-		if(success){
-			console.log(type);
-			view = view.setIn(["nodes", command.id, "connections", "incoming", join(id, command.param)], key);
-			if(type =="exports"){
-				view = view.setIn(["nodes", id, "connections", "data", key, "name"],
-					uniqueName(
-						view.getIn(["nodes", id, "connections", "data"]).map(elem => elem.get("name")),
-						"Export"
-					)
-				);
-			}
+		if(id == EXPORTS_ID){
+			connection = connection.set(
+				"name",
+				uniqueName(
+					view.get("connections")
+					.filter(c => c.getIn(["from", "id"]) == EXPORTS_ID)
+					.map(c => c.get("name")),
+					"Export"
+				)
+			)
+		}
+
+		view = view.set("connecting", null);
+
+		if(view.get("connections").some(val => 
+			val.get("from").equals(connection.get("from")) && 
+			val.get("to").equals(connection.get("to"))
+		)){
+			//do nothing
+		}else{
+			view = view.setIn(["connections", connectionId], connection);
+			view = view.setIn(["nodes", id, "selectedConnection"], connectionId);
 		}
 
 	}else if(command.type == "CONNECT_ABORT"){
 		view = view.set("connecting", null);
 
 	}else if(command.type == "CONNECT_REMOVE"){
-		view = removeConnection(view, command.id, command.key);
+		[state, view] = removeConnection(state, view, viewPath, command.connectionId);
 
-	}else if(command.type == "CONNECTION_SELECT"){
-		view = view.setIn(["nodes", command.id, "connections", "selected"], command.key);
+	}else if(command.type == "CONNECT_RENAME"){
+		view = view.setIn(["connections", command.connectionId, "name"], command.name);
+
+	}else if(command.type == "CONNECT_SELECT"){
+		let id = view.getIn(["connections", command.connectionId, "from", "id"]);
+		view = view.setIn(["nodes", id, "selectedConnection"], command.connectionId);
 
 	}else if(command.type == "EDIT_INSTRUCTIONS"){
 		view = view.set("edit", command.id);
@@ -283,23 +300,8 @@ function reducer(state, command){
 		view = view.set("scope", Immutable.fromJS(["nodes", command.id]));
 
 	}else if(command.type == "EDIT_CUSTOM_END"){
-		parentView = parentView.set("scope", null);
-
+		state = state.setIn(viewPath.splice(-2, 2, "scope"), null);
 	}
 
-	if(parentView){
-		if(parentPath.size){
-			state = state.setIn(parentPath, parentView)
-		}else{
-			state = parentView;
-		}
-	}
-
-	if(viewPath.size){
-		state = state.setIn(viewPath, view);
-	}else{
-		state = view;
-	}
-
-	return state;
+	return setView(state, view, viewPath);
 }
