@@ -1,6 +1,13 @@
-div.nodeList{
+.columns{
 	display: flex;
 	flex-direction: row;
+	justify-content: flex-start;
+}
+
+div.nodeList{
+	display: flex;
+	flex-direction: column-reverse;
+	width: 200px;
 	justify-content: flex-start;
 	align-items: stretch;
 }
@@ -18,7 +25,13 @@ div.audio-node{
 	flex-direction: column;
 	justify-content: flex-start;
 	align-items: stretch;
-	width: 200px;
+}
+
+div.audio-node select{
+	width: 150px;
+}
+div.output{
+	height: 100px;
 }
 
 div.audio-param > *{
@@ -53,19 +66,32 @@ span.close{
 
 span.collapse{
 	cursor: pointer;
+	margin: 10px;
 	text-decoration: underline;
 }
 
-div.play, div.stop{
-     transition-property: border-left, border-top, border-bottom, border-right;
-     transition-duration: 0.5s;
-     transition-timing-function: ease-in;
+div.hiddenLists{
+	margin: 10px;
+	border-bottom: 1px dashed black;
+	max-width: 90vw;
 }
-div.play{
-	margin: 50px;
+
+div.hiddenLists > span{
+	display: inline-block;
+	margin: 0px 20px;
+	cursor: pointer;
+}
+
+div.play, div.stop{
+	margin: 0px 50px ;
 	width: 0;
 	height: 0;
 	cursor: pointer;
+    transition-property: border-left, border-top, border-bottom, border-right;
+    transition-duration: 0.5s;
+    transition-timing-function: ease-in;
+}
+div.play{
 	border-left: 80px solid green; 
 	border-top: 50px solid transparent; 
 	border-bottom: 50px solid transparent;
@@ -73,18 +99,10 @@ div.play{
 }
 
 div.stop{
-	margin: 50px;
-	width: 0;
-	height: 0;
-	cursor: pointer;
 	border-left: 50px solid red; 
 	border-top: 50px solid red; 
 	border-bottom: 50px solid red;
 	border-right: 50px solid red;
-}
-
-select{
-	width: 170px;
 }
 
 span.highlighted{

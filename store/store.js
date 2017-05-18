@@ -39,7 +39,8 @@ function createLists(view, arr){
 const mainViewTemplate = createLists(
 	viewTemplate, 
 	[
-		"instruction",
+		"code",
+		"transformer",
 		"wave",
 		"custom",
 		"oscillator",
@@ -52,6 +53,7 @@ const mainViewTemplate = createLists(
 const customViewTemplate = createLists(
 	viewTemplate, 
 	[
+		"transformer",
 		"wave",
 		"custom",
 		"oscillator",
@@ -85,9 +87,12 @@ const nodeTemplates = Immutable.fromJS({
 		name: "Wave",
 		coefs: [[1, 0]]
 	},
-	instruction: {
-		name: "Instruction",
-		bar: 1,
+	code: {
+		name: "Code",
+		text: ""
+	},
+	transformer: {
+		name: "Transformer",
 		text: ""
 	},
 	custom: customViewTemplate
@@ -241,6 +246,7 @@ function reducer(state, command){
 		view = view.set("connecting", 
 			Immutable.fromJS({
 				id: command.id,
+				type: view.getIn(["nodes", command.id, "nodeType"]),
 				param: command.param
 			})
 		);
@@ -290,10 +296,10 @@ function reducer(state, command){
 		let id = view.getIn(["connections", command.connectionId, "from", "id"]);
 		view = view.setIn(["nodes", id, "selectedConnection"], command.connectionId);
 
-	}else if(command.type == "EDIT_INSTRUCTIONS"){
+	}else if(command.type == "EDIT_TEXT"){
 		view = view.set("edit", command.id);
 
-	}else if(command.type == "EDIT_INSTRUCTIONS_END"){
+	}else if(command.type == "EDIT_TEXT_END"){
 		view = view.set("edit", null);
 
 	}else if(command.type == "EDIT_CUSTOM"){

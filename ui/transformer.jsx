@@ -2,23 +2,18 @@ var React = require("react");
 var Header = require("./header.jsx");
 var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
-var util = require("./util.js");
 
 module.exports = function({id, type, data, nodes, connecting, connections,
-	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect}
+	methods: {remove, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, connectRename, openEditor}
 }){
+	var scId = data.get("selectedConnection");
 	return <div className="audio-node">
 		<Header name={data.get("name")}
-			connectable={util.connectable.audioNode(id, connecting)}
+			connectable={connecting && connecting.get("id") != id && 
+				(connecting.get("type") == "code" || connecting.get("type") == "transformer")}
 			connectTo={connectTo.bind(null, id, null)}
 			remove={remove.bind(null, id)} /> 
-		<Param param="delayTime" name="Delay time" value={data.get("delayTime")} 
-			connectable={util.connectable.audioParam(id, connecting)}
-			connectTo={connectTo.bind(null, id)}
-			modify={modify.bind(null, id)}/>
-		<Param param="maxDelay" name="Max. delay" value={data.get("maxDelay")} 
-			connectable={false}
-			modify={modify.bind(null, id)}/>
+		<button onClick={openEditor.bind(null, id)}>Edit</button>
 		{connecting && (connecting.get("id") == id) ?
 		<button onClick={() => connectAbort()}>Cancel</button>:
 		<button onClick={() => connectFrom(id)}>Connect</button>}
@@ -27,5 +22,8 @@ module.exports = function({id, type, data, nodes, connecting, connections,
 			nodes={nodes} 
 			select={connectSelect}
 			remove={connectRemove}/>
+		{scId && <input type="text" value={connections.getIn([scId, "name"])}
+			onChange={e => connectRename(scId, e.target.value)}>
+		</input>}
 	</div>
 }

@@ -2,6 +2,7 @@ var React = require("react");
 var Header = require("./header.jsx");
 var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
+var util = require("./util.js");
 
 module.exports = function({id, type, connecting, connections, nodes, waves, data, 
 	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect}
@@ -11,11 +12,11 @@ module.exports = function({id, type, connecting, connections, nodes, waves, data
 			connectable={false}
 			remove={remove.bind(null, id)} /> 
 		<Param param="frequency" name="Frequency" value={data.get("frequency")} 
-			connectable={connecting && connecting.get("id") != id}
+			connectable={util.connectable.audioParam(id, connecting)}
 			connectTo={connectTo.bind(null, id)}
 			modify={modify.bind(null, id)}/>
 		<Param param="detune" name="Detune" value={data.get("detune")} 
-			connectable={connecting && connecting.get("id") != id}
+			connectable={util.connectable.audioParam(id, connecting)}
 			connectTo={connectTo.bind(null, id)}
 			modify={modify.bind(null, id)}/>
 		<div className="audio-param">

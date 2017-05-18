@@ -55,10 +55,10 @@ module.exports = connect(
 					dispatch({type: "EDIT_CUSTOM_END"});
 				},
 				openEditor(id){
-					dispatch({type: "EDIT_INSTRUCTIONS", id});
+					dispatch({type: "EDIT_TEXT", id});
 				},
 				closeEditor(){
-					dispatch({type: "EDIT_INSTRUCTIONS_END"});
+					dispatch({type: "EDIT_TEXT_END"});
 				},
 				togglePlaying(){
 					dispatch({type: "TOGGLE_PLAYING"});
@@ -78,14 +78,14 @@ module.exports = connect(
 
 		var type = view.get("nodeType");
 		if(type == "root"){
-			return <div> 
+			return <div className="columns"> 
 				<ListManager view={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Synthesizer state={view} togglePlaying={methods.togglePlaying}/>
 				<Editor state={view} edit={methods.modify} closeEditor={methods.closeEditor}/>
 			</div>
 		}else if(type == "custom"){
-			return <div> 
+			return <div className="columns"> 
 				<ListManager view={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Exports state={view} methods={methods}/>

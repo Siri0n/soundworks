@@ -13,13 +13,13 @@ module.exports = function({Node, type, methods, view}){
 	var nodes = view.get("nodes");
 	var waves = (type == "oscillator") && view.getIn(["lists", "wave", "nodes"]);
 	return <div> 
-		<div>
-			{type + " nodes      "} 
+		<div style={{textAlign: "center"}}>
+			{type + " nodes"} 
 			<span className="collapse" onClick={() => methods.toggleCollapsed(type)}>
-				{data.get("collapsed") ? "expand" : "collapse"}
+				collapse
 			</span>
 		</div>
-		{!data.get("collapsed") && <div className="nodeList">
+		<div className="nodeList">
 			{data.get("nodes").map(id => {
 				return <Node 
 					key={id} 
@@ -28,6 +28,6 @@ module.exports = function({Node, type, methods, view}){
 					{...{id, type, nodes, waves, methods, connecting}}/>
 			})}
 			<button className="add" onClick={() => methods.create(type)}>add</button>
-		</div>}
+		</div>
 	</div>
 }

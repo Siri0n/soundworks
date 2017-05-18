@@ -1,5 +1,7 @@
-var Instructions = require("./instructions.js");
+var Code = require("./code.js");
+var Transformer = require("./transformer.js");
 var Immutable = require("immutable");
+var jailed = window.jailed = require("jailed");
 
 var ctx, main;
 
@@ -16,13 +18,29 @@ function forAllNodesOfType(type, view, cb){
 	nodes && nodes.forEach(id => cb(view.getIn(["nodes", id]), id))
 }
 
+function Counter(i){
+	console.log(i);
+	var counted;
+	this.onZero = new Promise((resolve, reject) => {
+		counted = resolve;
+	});
+	(i < 1) && counted();
+	this.inc = () => {++i; console.log(i); return this};
+	this.dec = () => {(--i < 1) && counted(); console.log(i); return this};
+}
+
 function ComplexNode(ctx, view){
 	var self = this;
 	var nodes = {};
 	var oscillators = [];
-	var instructions = [];
+	var codes = [];
+	var transformers = [];
 	var customs = [];
+
+	var plugin;
+
 	var type = view.get("nodeType");
+	
 	if(type == "root"){
 		nodes[0] = ctx.destination;
 	}else{
@@ -54,9 +72,14 @@ function ComplexNode(ctx, view){
 		g.gain.value = data.get("gain");
 	});
 
-	forAllNodesOfType("instruction", view, function(data, id){
-		var i = nodes[id] = new Instructions(ctx, data.get("text"), data.get("bar"));
-		instructions.push(i);
+	forAllNodesOfType("code", view, function(data, id){
+		var i = nodes[id] = new Code(ctx, data.get("text"));
+		codes.push(i);
+	});
+
+	forAllNodesOfType("transformer", view, function(data, id){
+		var i = nodes[id] = new Transformer(ctx, data.get("text"));
+		transformers.push(i);
 	});
 
 	forAllNodesOfType("delay", view, function(data, id){
@@ -89,37 +112,97 @@ function ComplexNode(ctx, view){
 			throw new Error("Not implemented yet");
 		}
 		if(c.to.param){
-			nodeFrom.connect(nodeTo[c.to.param]);
+			nodeFrom.connect(nodeTo[c.to.param], c.name);
 		}else{
-			nodeFrom.connect(nodeTo);
+			nodeFrom.connect(nodeTo, c.name);
 		}
 	});
 
+
+	this.getAllCodes = function(){
+		return customs.reduce(
+			(acc, next) => acc.concat(next.getAllCodes()), 
+			codes
+		)
+	}
+
+	this.getAllTransformers = function(){
+		return customs.reduce(
+			(acc, next) => acc.concat(next.getAllTransformers()), 
+			transformers
+		)
+	}
+
+	this.ready = function(){
+		var transformers = self.getAllTransformers();
+		var codes = self.getAllCodes();
+		var funcs = transformers.map(t => {
+			return `function(str, $){${t.text}}`;
+		});
+		var script = `
+			var api = {
+				transform: function(i, strings, cb){
+					cb(
+						strings.reduce(function(acc, next){
+							return acc.concat(funcs[i](next, states[i]));
+						}, [])
+					);
+				}
+			};
+			application.setInterface(api);
+			var funcs = [${funcs.join(",")}];
+			var states = [${funcs.map(()=>("{}")).join(",")}];
+		`;
+		console.log(script);
+		plugin = new jailed.DynamicPlugin(script);
+		plugin.whenConnected(() => console.log("connected"));
+		plugin.whenFailed(() => console.log("failed"));
+		return new Promise((resolve, reject) => {
+			plugin.whenConnected(resolve);
+			plugin.whenFailed(reject);
+		}).then(
+			result => {
+				console.log("PLUGIN CONNECTED");
+				transformers.forEach((t, i) => {
+					t.init(
+						strings => new Promise((resolve, reject) => {
+							plugin.remote.transform(i, strings, resolve);
+						})
+					)
+				})
+				var counter = new Counter(codes.length);
+
+				codes.forEach(c => c.start(counter))
+
+				return counter.onZero
+			},
+			error => {
+				throw error
+			}
+		);
+	}
+
 	this.start = function(){
 		oscillators.forEach(o => o.start());
-		instructions.forEach(i => i.start());
 		customs.forEach(c => c.start());
 	}
 
 	this.stop = function(){
 		oscillators.forEach(o => o.stop());
-		instructions.forEach(i => i.stop());
 		customs.forEach(c => c.stop());
 	}
 
 	this.connect = function(arg){
 		nodes[0].connect(arg);
 	}
-
-	this.disconnect = function(){
-		//niy
-	}
 }
 
 function play(state){
 	ctx = createContext();
 	main = new ComplexNode(ctx, state);
-	main.start();
+	main.ready().then(
+		() => {console.log("start!"); main.start();}
+	);
 }
 
 function stop(){
