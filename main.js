@@ -3,6 +3,7 @@ var ReactDOM = require("react-dom");
 var ReactRedux = require("react-redux");
 var UI = require("./ui/ui.jsx");
 var store = window.store = require("./store/store");
+window.Communicator = require("./sound/communicator.js"); //test
 
 /*var gist = window.location.search.match(/gist=([a-zA-Z0-9]+)_([a-zA-Z0-9]+)/);
 gist = gist && gist[1] + "/" + gist[2];

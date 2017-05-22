@@ -1,13 +1,15 @@
 const TYPE = "transformer";
 
-function Transformer(ctx, text){
+function Transformer(ctx, compiler, text){
 	var connections = {};
 	var transform;
+	var state;
 	this.type = TYPE;
 	this.text = text;
 
-	this.init = function(transform_){
-		transform = transform_;
+	this.compile = function(){
+		return compiler.compile(text)
+		.then(f => transform = f);
 	} 
 
 	this.connect = function(arg, name){
@@ -21,30 +23,29 @@ function Transformer(ctx, text){
 		}
 		transform(strings).then(
 			result => {
-				console.log("FUCK YOU");
-				console.log(result);
 				var outStrings = {};
 				result.forEach(string => {
-					var [name, rest] = string.split(/\s+/);
+					var [name, ...rest] = string.split(/\s+/);
 					outStrings[name] = outStrings[name] || [];
-					outStrings[name].push(rest);
+					outStrings[name].push(rest.join(" "));
 				})
-				console.log(outStrings);
 				Object.keys(connections).forEach(name => {
-					var out = connections[name];
+					var outputs = connections[name];
 					var data = outStrings[name];
-					if(!out || !data){
+					if(!outputs || !data){
 						return;
 					}
-					if(out.type == TYPE){
-						out.push(data, counter.inc());
-					}else{
-						data.forEach(string => {
-							var [method, ...args] = string.split(/\s+/g);
-							console.log(method + "(" + args.join(", ") + ")");
-							out[method](...args);
-						});
-					}
+					outputs.forEach(out => {
+						if(out.type == TYPE){
+							out.push(data, counter.inc());
+						}else{
+							data.forEach(string => {
+								var [method, ...args] = string.split(/\s+/);
+								console.log(out, method + "(" + args.join(", ") + ")");
+								out[method](...args);
+							});
+						}
+					});
 				});
 				counter.dec();
 			}, 

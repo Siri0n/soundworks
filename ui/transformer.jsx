@@ -7,6 +7,10 @@ module.exports = function({id, type, data, nodes, connecting, connections,
 	methods: {remove, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, connectRename, openEditor}
 }){
 	var scId = data.get("selectedConnection");
+	var name = scId && connections.find(
+		([id, c]) => id == scId
+	)[1].get("name") || "";
+	console.log("name", connections.getIn([scId, "name"]));
 	return <div className="audio-node">
 		<Header name={data.get("name")}
 			connectable={connecting && connecting.get("id") != id && 
@@ -22,7 +26,7 @@ module.exports = function({id, type, data, nodes, connecting, connections,
 			nodes={nodes} 
 			select={connectSelect}
 			remove={connectRemove}/>
-		{scId && <input type="text" value={connections.getIn([scId, "name"])}
+		{scId && <input type="text" value={name}
 			onChange={e => connectRename(scId, e.target.value)}>
 		</input>}
 	</div>
