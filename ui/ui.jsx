@@ -82,6 +82,7 @@ module.exports = connect(
 				<ListManager view={view} methods={methods}/>
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Synthesizer state={view} togglePlaying={methods.togglePlaying}/>
+				<SaveLoad state={view} load={methods.load}/>
 				<Editor state={view} edit={methods.modify} closeEditor={methods.closeEditor}/>
 			</div>
 		}else if(type == "custom"){

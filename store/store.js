@@ -205,16 +205,22 @@ function reducer(state, command){
 	var [view, viewPath] = getView(state);
 
 	if(command.type == "LOAD"){
-/*		if(!parentView){
-			throw new Error("dafuq?");
+		console.log(viewPath.size);
+		if(viewPath.size){
+			let parentPath = getParentPath(viewPath);
+			let parentView = state.getIn(parentPath);
+			[state, parentView] = deleteNode(state, parentView, parentPath, parentView.getIn(["scope", 1]));
+			let template = Immutable.fromJS(JSON.parse(command.data));
+			parentView = createNode(parentView, "custom", template);
+			parentView = parentView.set(
+				"scope", 
+				Immutable.fromJS(["nodes", parentView.get("lastId") + ""])
+			);
+			state = setView(state, parentView, parentPath);
+			[view, viewPath] = getView(state);
+		}else{
+			view = Immutable.fromJS(JSON.parse(command.data));
 		}
-		parentView = deleteNode(parentView, parentView.getIn(["scope", 1]));
-		let template = Immutable.fromJS(JSON.parse(command.data));
-		parentView = createNode(parentView, "custom", template);
-		parentView = parentView.set(
-			"scope", 
-			Immutable.fromJS(["nodes", parentView.get("lastId") + ""])
-		);*/
 
 	}else if(command.type == "TOGGLE_COLLAPSED"){
 		view = view.updateIn(["lists", command.list, "collapsed"], b => !b);
