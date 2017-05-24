@@ -14,7 +14,7 @@ module.exports = function({id, type, data, nodes, connecting, connections,
 	return <div className="audio-node">
 		<Header name={data.get("name")}
 			connectable={connecting && connecting.get("id") != id && 
-				(connecting.get("type") == "code" || connecting.get("type") == "transformer")}
+				(connecting.get("type") == "code" || connecting.get("type") == "transformer" || connecting.get("type") == "exports")}
 			connectTo={connectTo.bind(null, id, null)}
 			remove={remove.bind(null, id)} /> 
 		<button onClick={openEditor.bind(null, id)}>Edit</button>
