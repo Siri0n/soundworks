@@ -42,6 +42,10 @@ div.audio-param > input{
 	width: 80px;
 }
 
+input.header{
+	width: 120px;
+}
+
 div.audio-param > select{
 	width: 120px;
 }

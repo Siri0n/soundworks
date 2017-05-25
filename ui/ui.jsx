@@ -21,6 +21,9 @@ module.exports = connect(
 				remove(id){
 					dispatch({type: "DELETE_NODE", id});
 				},
+				rename(id, name){
+					dispatch({type: "RENAME_NODE", id, name});
+				},
 				modify(id, key, value){
 					dispatch({type: "MODIFY", id, key, value});
 				},

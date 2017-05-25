@@ -231,6 +231,9 @@ function reducer(state, command){
 	}else if(command.type == "DELETE_NODE"){
 		[state, view] = deleteNode(state, view, viewPath, command.id);		
 
+	}else if(command.type == "RENAME_NODE"){
+		view = view.setIn(["nodes", command.id, "name"], command.name);	
+
 	}else if(command.type == "MODIFY"){
 		let path = command.path || [command.key];
 		view = view.setIn(["nodes", command.id, ...path], command.value);

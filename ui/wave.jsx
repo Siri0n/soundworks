@@ -3,12 +3,13 @@ var Header = require("./header.jsx");
 var Immutable = require("immutable");
 
 module.exports = function({id, type, data, 
-	methods: {remove, modify}
+	methods: {remove, rename, modify}
 }){
 	return <div className="audio-node">
 		<Header name={data.get("name")}
 			connectable={false}
-			remove={remove.bind(null, id)}/> 
+			remove={remove.bind(null, id)}
+			rename={rename.bind(null, id)}/> 
 		<div className="coefs"><table><tbody>
 			{data.get("coefs").map((pair, index) => {
 				return <tr key={index}>

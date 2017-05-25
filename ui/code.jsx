@@ -4,12 +4,13 @@ var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
 
 module.exports = function({id, type, data, nodes, connecting, connections,
-	methods: {remove, connectFrom, connectAbort, connectRemove, connectSelect, openEditor}
+	methods: {remove, rename, connectFrom, connectAbort, connectRemove, connectSelect, openEditor}
 }){
 	return <div className="audio-node">
 		<Header name={data.get("name")}
 			connectable={false}
-			remove={remove.bind(null, id)} /> 
+			remove={remove.bind(null, id)}
+			rename={rename.bind(null, id)}/> 
 		<button onClick={openEditor.bind(null, id)}>Edit</button>
 		{connecting && (connecting.get("id") == id) ?
 		<button onClick={() => connectAbort()}>Cancel</button>:

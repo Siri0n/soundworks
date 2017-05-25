@@ -15,7 +15,7 @@ function getParamValue(data, id, param){
 }
 
 module.exports = function({id, type, data, nodes, connecting, connections, 
-	methods: {remove, setCustomParam, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, editCustomNode}
+	methods: {remove, rename, setCustomParam, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, editCustomNode}
 }){
 	var exports = data.get("connections")
 		.filter(c => c.getIn(["from", "id"]) == "-1")
@@ -25,7 +25,8 @@ module.exports = function({id, type, data, nodes, connecting, connections,
 	return <div className="audio-node">
 		<Header name={data.get("name")}
 			connectable={false}
-			remove={remove.bind(null, id)}/>
+			remove={remove.bind(null, id)}
+			rename={rename.bind(null, id)}/>
 
 		{exports.map(([cid, c]) => {
 			var connectable = connecting && connecting.get("id") != id;

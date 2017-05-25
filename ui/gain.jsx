@@ -5,12 +5,13 @@ var Param = require("./param.jsx");
 var util = require("./util.js");
 
 module.exports = function({id, type, data, nodes, connecting, connections,
-	methods: {remove, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect}
+	methods: {remove, rename, modify, connectFrom, connectTo, connectAbort, connectRemove, connectSelect}
 }){
 	return <div className="audio-node">
 		<Header name={data.get("name")}
 			connectable={util.connectable.audioNode(id, connecting)}
-			remove={remove.bind(null, id)} 
+			remove={remove.bind(null, id)}
+			rename={rename.bind(null, id)}
 			connectTo={connectTo.bind(null, id, null)}/> 
 		<Param param="gain" 
 			name="Gain" 

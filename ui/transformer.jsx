@@ -4,7 +4,7 @@ var Connections = require("./connections.jsx");
 var Param = require("./param.jsx");
 
 module.exports = function({id, type, data, nodes, connecting, connections,
-	methods: {remove, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, connectRename, openEditor}
+	methods: {remove, rename, connectFrom, connectTo, connectAbort, connectRemove, connectSelect, connectRename, openEditor}
 }){
 	var scId = data.get("selectedConnection");
 	var name = scId && connections.find(
@@ -16,7 +16,8 @@ module.exports = function({id, type, data, nodes, connecting, connections,
 			connectable={connecting && connecting.get("id") != id && 
 				(connecting.get("type") == "code" || connecting.get("type") == "transformer" || connecting.get("type") == "exports")}
 			connectTo={connectTo.bind(null, id, null)}
-			remove={remove.bind(null, id)} /> 
+			remove={remove.bind(null, id)}
+			rename={rename.bind(null, id)}/> 
 		<button onClick={openEditor.bind(null, id)}>Edit</button>
 		{connecting && (connecting.get("id") == id) ?
 		<button onClick={() => connectAbort()}>Cancel</button>:
