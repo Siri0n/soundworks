@@ -15,6 +15,7 @@ module.exports = React.createClass({
 
 function save(state){
 	var obj = state.toJS();
+	obj.playing = false;
 	var file = new File(
 		[JSON.stringify(obj)],
 		obj.name + ".test",

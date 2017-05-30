@@ -94,6 +94,7 @@ module.exports = connect(
 				<Out connecting={view.get("connecting")} connectTo={methods.connectTo.bind(null, "0", null)}/>
 				<Exports state={view} methods={methods}/>
 				<SaveLoad state={view} load={methods.load}/>
+				<Editor state={view} edit={methods.modify} closeEditor={methods.closeEditor}/>
 			</div>
 		}else{
 			return <div>Something goes wrong... Type is {type}</div>

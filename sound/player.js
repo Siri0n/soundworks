@@ -4,7 +4,9 @@ var CustomNode = require("./customNode.js");
 var ctx, main, compiler;
 
 function createContext(){
-	return new (window.AudioContext || window.webkitAudioContext)();
+	var ctx = new (window.AudioContext || window.webkitAudioContext)();
+	ctx.suspend();
+	return ctx;
 }
 
 function play(state){
@@ -12,11 +14,14 @@ function play(state){
 	compiler = new Compiler();
 	main = new CustomNode(ctx, compiler, state);
 	main.ready().then(
-		() => {console.log("start!"); main.start();}
+		() => {ctx.resume(); main.start();}
 	);
 }
 
 function stop(){
+	if(!main){
+		return;
+	}
 	main.stop();
 	main = null;
 	ctx.close();
