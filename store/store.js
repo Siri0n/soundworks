@@ -44,6 +44,7 @@ const mainViewTemplate = createLists(
 		"wave",
 		"custom",
 		"oscillator",
+		"noise",
 		"gain",
 		"delay"
 	]
@@ -57,6 +58,7 @@ const customViewTemplate = createLists(
 		"wave",
 		"custom",
 		"oscillator",
+		"noise",
 		"gain",
 		"delay"
 	]
@@ -73,6 +75,10 @@ const nodeTemplates = Immutable.fromJS({
 		frequency: 500,
 		detune: 0,
 		type: "sine"
+	},
+	noise: {
+		name: "Noise",
+		type: "white"
 	},
 	gain: {
 		name: "Gain",

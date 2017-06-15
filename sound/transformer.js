@@ -41,7 +41,6 @@ function Transformer(ctx, compiler, text){
 						}else{
 							data.forEach(string => {
 								var [method, ...args] = string.split(/\s+/);
-								console.log(out, method + "(" + args.join(", ") + ")");
 								out[method](...args);
 							});
 						}

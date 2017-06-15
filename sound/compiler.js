@@ -11,16 +11,13 @@ function Compiler(){
 
 	var resolveReady;
 	var ready = new Promise(resolve => resolveReady = resolve);
-	c.onMessage(msg => {console.log("compiler got msg", msg)})
 	c.onMessage(msg => {msg == "connected" && resolveReady()});
 
 	this.compile = function(script){
 		console.log("compilator is compiling");
 		script = `(function(str, state){${script}})`;
 		return ready
-		.then(() => console.log("connection is ready"))
 		.then(() => c.postMessage({type: "compile", script})) 
-		.then(id => {console.log("got id", id); return id})
 		.then(scriptId => strings => c.postMessage({type: "call", scriptId, strings}))
 	},
 

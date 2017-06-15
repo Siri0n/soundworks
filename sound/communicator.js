@@ -25,7 +25,6 @@ function Communicator(w){
 	this.ready = new Promise((resolve, reject) => isReady = resolve);
 
 	var listener = function(e){
-		console.log("communicator got message", e.data);
 		if(!isWorker && e.source != w){
 			return;
 		}

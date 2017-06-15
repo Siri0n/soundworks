@@ -1,5 +1,6 @@
 var Code = require("./code.js");
 var Transformer = require("./transformer.js");
+var Noise = require("./noise.js");
 var Immutable = require("immutable");
 
 function isWaveform(type){
@@ -12,20 +13,20 @@ function forAllNodesOfType(type, view, cb){
 }
 
 function Counter(i){
-	console.log(i);
 	var counted;
 	this.onZero = new Promise((resolve, reject) => {
 		counted = resolve;
 	});
 	(i < 1) && counted();
-	this.inc = () => {++i; console.log(i); return this};
-	this.dec = () => {(--i < 1) && counted(); console.log(i); return this};
+	this.inc = () => {++i; return this};
+	this.dec = () => {(--i < 1) && counted(); return this};
 }
 
 function CustomNode(ctx, compiler, view){
 	var self = this;
 	var nodes = {};
 	var oscillators = [];
+	var noises = [];
 	var codes = [];
 	var transformers = [];
 	var customs = [];
@@ -58,6 +59,11 @@ function CustomNode(ctx, compiler, view){
 		}else{
 			o.setPeriodicWave(nodes[type]);
 		}
+	});
+
+	forAllNodesOfType("noise", view, function(data, id){
+		var n = nodes[id] = new Noise(ctx, data.get("type"));
+		noises.push(n);
 	});
 
 	forAllNodesOfType("gain", view, function(data, id){
@@ -130,7 +136,6 @@ function CustomNode(ctx, compiler, view){
 		var transformers = self.getAllTransformers();
 		return Promise.all(transformers.map(t => t.compile()))
 		.then(() => {
-			console.log("compiled!");
 			var codes = self.getAllCodes();
 			var counter = new Counter(codes.length);
 			codes.forEach(c => c.start(counter));
@@ -142,11 +147,13 @@ function CustomNode(ctx, compiler, view){
 
 	this.start = function(){
 		oscillators.forEach(o => o.start());
+		noises.forEach(n => n.start());
 		customs.forEach(c => c.start());
 	}
 
 	this.stop = function(){
 		oscillators.forEach(o => o.stop());
+		noises.forEach(n => n.stop());
 		customs.forEach(c => c.stop());
 	}
 
