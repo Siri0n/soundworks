@@ -55,7 +55,9 @@ var generators = {
 	brown: function(buffer){
 		var last = 0;
 		for(let i = 0; i < buffer.length; i++){
-			last = buffer.getChannelData(0)[i] = (last + Math.random()*0.02)/1.02;
+			let rand = Math.random();
+			(last*rand > 0) && (Math.random() > Math.PI/6) && (rand *= -1); //hack for proper looping
+			last = buffer.getChannelData(0)[i] = (last + rand*0.02)/1.02;
 			buffer.getChannelData(0)[i] *= 3.5;
 		}
 	}

@@ -15,18 +15,21 @@ var mods = {
 	"b": -1,
 	"": 0
 }
-var args = str.split(/\s+/);
-args = args.map(function(arg){
-	var match = regex.exec(arg);
-	var pow;
-	if(match){
-		pow = notes[match[1]] + mods[match[2]];
-		pow = pow/12 + (match[3] - 0);
-		pow -= A4pow;
-		return Math.pow(2, pow)*A4;
-	}else{
-		return arg;
-	}
-});
 
-return ["_ " + args.join(" ")];
+this.main = function(str){
+	var args = str.split(/\s+/);
+	args = args.map(function(arg){
+		var match = regex.exec(arg);
+		var pow;
+		if(match){
+			pow = notes[match[1]] + mods[match[2]];
+			pow = pow/12 + (match[3] - 0);
+			pow -= A4pow;
+			return Math.pow(2, pow)*A4;
+		}else{
+			return arg;
+		}
+	});
+
+	return ["_ " + args.join(" ")];
+}

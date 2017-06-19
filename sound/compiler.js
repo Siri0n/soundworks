@@ -5,7 +5,7 @@ function Compiler(){
 	var sandbox = document.createElement("iframe");
 	sandbox.setAttribute("src", "sandbox.html");
 	sandbox.setAttribute("sandbox", "allow-scripts");
-	sandbox.setAttribute("style", "");
+	sandbox.setAttribute("style", "visibility: hidden");
 	document.body.appendChild(sandbox);
 	var c = new Communicator(sandbox.contentWindow);
 
@@ -15,7 +15,7 @@ function Compiler(){
 
 	this.compile = function(script){
 		console.log("compilator is compiling");
-		script = `(function(str, state){${script}})`;
+		script = `new (function(){${script}})()`;
 		return ready
 		.then(() => c.postMessage({type: "compile", script})) 
 		.then(scriptId => strings => c.postMessage({type: "call", scriptId, strings}))
