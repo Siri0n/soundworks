@@ -61,6 +61,15 @@ function CustomNode(ctx, compiler, view){
 		}
 	});
 
+	forAllNodesOfType("filter", view, function(data, id){
+		var f = nodes[id] = ctx.createBiquadFilter();
+		f.frequency.value = data.get("frequency");
+		f.detune.value = data.get("detune");
+		f.type = data.get("type");
+		f.Q.value = data.get("Q");
+		f.gain.value = data.get("gain");
+	});
+
 	forAllNodesOfType("noise", view, function(data, id){
 		var n = nodes[id] = new Noise(ctx, data.get("type"));
 		noises.push(n);

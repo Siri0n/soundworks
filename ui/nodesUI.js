@@ -6,5 +6,6 @@ module.exports = {
 	gain: require("./gain.jsx"),
 	wave: require("./wave.jsx"),
 	delay: require("./delay.jsx"),
+	filter: require("./filter.jsx"),
 	custom: require("./customNode.jsx")
 };

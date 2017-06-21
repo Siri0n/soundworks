@@ -46,7 +46,8 @@ const mainViewTemplate = createLists(
 		"oscillator",
 		"noise",
 		"gain",
-		"delay"
+		"delay",
+		"filter"
 	]
 ).set("nodeType", "root");
 
@@ -60,7 +61,8 @@ const customViewTemplate = createLists(
 		"oscillator",
 		"noise",
 		"gain",
-		"delay"
+		"delay",
+		"filter"
 	]
 ).set("name", "Custom")
 .setIn(["nodes", EXPORTS_ID], Immutable.fromJS({
@@ -92,6 +94,14 @@ const nodeTemplates = Immutable.fromJS({
 	wave: {
 		name: "Wave",
 		coefs: [[1, 0]]
+	},
+	filter: {
+		name: "Filter",
+		type: "lowpass",
+		frequency: 500,
+		detune: 0,
+		Q: 1,
+		gain: 1
 	},
 	code: {
 		name: "Code",
